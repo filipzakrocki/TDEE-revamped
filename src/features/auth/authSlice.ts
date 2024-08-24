@@ -4,7 +4,6 @@ import { User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from
 
 export const signIn = createAsyncThunk('auth/signIn', async ({ email, password }: { email: string; password: string; }) => {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  console.log(userCredential.user)
   return userCredential.user;
 });
 

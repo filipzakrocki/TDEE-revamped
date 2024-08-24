@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../app/store';
 import { User } from 'firebase/auth';
-import { signIn, signOut, register } from '../features/auth/authSlice';
-import { Input, Button, Box, FormControl, FormLabel } from '@chakra-ui/react';
+import { signIn,
+    //  signOut, 
+     register } from '../features/auth/authSlice';
+import { Input, Button, Box, FormControl, FormLabel, Image } from '@chakra-ui/react';
 
 function Auth() {
+    const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const user: User | null = useSelector((state: RootState) => state.auth.user);
 
@@ -27,26 +31,25 @@ function Auth() {
         }
     };
 
-    const handleSignOut = () => {
-        dispatch(signOut());
-    };
+    // const handleSignOut = () => {
+    //     dispatch(signOut());
+    // };
 
     const toggleForm = () => {
         setIsRegistering(!isRegistering);
     };
 
-    if (user) {
-        return (
-            <Box>
-                Signed in as {user?.email}
-                <Button onClick={handleSignOut}>Sign out</Button>
-            </Box>
-        );
-    }
+    useEffect(() => {
+        if (user) navigate('/calculator');
+    }, [user, navigate]);
+
 
     return (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-            <Box width="300px">
+        <Box display="flex" justifyContent="center" alignItems="center" flexDirection='column' height="100vh">
+            <Box width='400px'>
+                <Image src={require('../assets/tdeefitteal.png')} mb={10}/>
+            </Box>
+            <Box width="400px">
                 <FormControl>
                     <FormLabel>Email</FormLabel>
                     <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
@@ -72,14 +75,13 @@ function Auth() {
                     </FormControl>
                 )}
                 <Box display='flex' justifyContent='space-between' alignItems='center'>
-                    <Button colorScheme='teal' variant='outline' mt={4} onClick={toggleForm}>
-                        {isRegistering ? 'Sign In' : 'Sign up'}
+                    <Button colorScheme='teal' variant='link' mt={4} onClick={toggleForm}>
+                        {isRegistering ? 'Switch to sign in' : 'Switch to sign up'}
                     </Button>
-                    <Button colorScheme='teal' variant='outline' mt={4} onClick={isRegistering ? handleRegister : handleSignIn}>
+                    <Button colorScheme='teal' variant='solid' mt={4} onClick={isRegistering ? handleRegister : handleSignIn}>
                         {isRegistering ? 'Sign Up' : 'Sign In'}
                     </Button>
                 </Box>
-
             </Box>
         </Box>
     );
