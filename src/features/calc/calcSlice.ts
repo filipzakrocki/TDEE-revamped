@@ -82,7 +82,6 @@ export async function fetchData(path: string): Promise<any> {
             console.log("No data found");
             return null;
         }
-        console.log("Data fetched successfully");
     } catch (error) {
         console.error("Error getting data", error);
         throw error;

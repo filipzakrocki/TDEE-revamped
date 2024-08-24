@@ -20,7 +20,6 @@ const Calculator: React.FC = () => {
         const fetchDataWithToken = async () => {
             try {
                 const uid = user?.uid;
-                const token = await user?.getIdToken();
                 fetchData(`/states/${uid}`);
             } catch (error) {
                 console.error("Error fetching token:", error);
