@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../features/auth/authSlice';
+import calcReducer from '../features/calc/calcSlice';
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
+    calc: calcReducer
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
