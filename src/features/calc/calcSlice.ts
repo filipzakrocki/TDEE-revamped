@@ -73,8 +73,6 @@ export async function fetchData(path: string): Promise<any> {
     try {
         const snapshot = await get(dbRef);
 
-        console.log(snapshot)
-
         if (snapshot.exists()) {
             console.log(snapshot.val());
             return snapshot.val();
@@ -98,6 +96,21 @@ const calcSlice = createSlice({
             state.isWeightLoss = !state.isWeightLoss;
         },
     },
+    // For async Thunks
+    // extraReducers: (builder) => {
+    //     builder
+    //         .addCase(fetchData.pending, (state) => {
+    //             state.status = 'loading';
+    //         })
+    //         .addCase(fetchData.fulfilled, (state, action) => {
+    //             state.status = 'succeeded';
+    //             state.data = action.payload;
+    //         })
+    //         .addCase(fetchData.rejected, (state, action) => {
+    //             state.status = 'failed';
+    //             state.error = action.payload;
+    //         });
+    // },
 });
 
 // Export the reducer
