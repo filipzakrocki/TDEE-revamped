@@ -33,7 +33,7 @@ const Calculator: React.FC = () => {
 
 
     return (
-        <div>
+        <div style={{background: 'yellow'}}>
             Calculator
             <Button colorScheme='red' variant='solid' mt={4} onClick={logOut}>
                 Log Out
