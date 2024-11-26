@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../features/auth/authSlice';
 import calcReducer from '../features/calc/calcSlice';
+import interfaceReducer from '../features/interface/interfaceSlice';
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
-    calc: calcReducer
+    calc: calcReducer,
+    interface: interfaceReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

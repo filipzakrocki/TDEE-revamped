@@ -17,21 +17,23 @@ const Calculator: React.FC = () => {
 
 
     useEffect(() => {
-        const fetchDataWithToken = async () => {
+        const uid = user?.uid;
+
+        const fetchCalcData = async () => {
             try {
-                const uid = user?.uid;
+
                 fetchData(`/states/${uid}`);
             } catch (error) {
-                console.error("Error fetching token:", error);
+                console.error("Error fetching Calc Data: ", error);
             }
         };
 
-        fetchDataWithToken();
+        if (uid) fetchCalcData();
     }, [user]);
 
 
     return (
-        <div>
+        <div style={{background: 'yellow'}}>
             Calculator
             <Button colorScheme='red' variant='solid' mt={4} onClick={logOut}>
                 Log Out

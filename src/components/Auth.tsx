@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// useDispatch and useSelector are used to interact with the Redux store
 import { useSelector, useDispatch } from 'react-redux';
+// AppDispatch and RootState are used to type the useDispatch and useSelector hooks
 import { AppDispatch, RootState } from '../app/store';
 import { User } from 'firebase/auth';
 import { signIn,
