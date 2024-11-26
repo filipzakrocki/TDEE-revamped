@@ -1,6 +1,8 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { database } from '../../firebase/firebase';
 import { ref, get } from 'firebase/database';
+
+import { fetchDataStart, fetchDataFailure, fetchDataSuccess } from '../interface/interfaceSlice';
 
 interface CalcState {
     startDate: string;
@@ -67,50 +69,42 @@ const initialState: CalcState = {
     ]
 };
 
-export async function fetchData(path: string): Promise<any> {
-    const dbRef = ref(database, path);
+export const fetchData = createAsyncThunk('calc/fetchData', async (path: string) => {
+    const response = await fetch(path);
 
-    try {
-        const snapshot = await get(dbRef);
-
-        if (snapshot.exists()) {
-            console.log(snapshot.val());
-            return snapshot.val();
-        } else {
-            console.log("No data found");
-            return null;
-        }
-    } catch (error) {
-        console.error("Error getting data", error);
-        throw error;
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
     }
-}
+    const data = await response.json();
+    return data;
+});
 
 // Create the slice
 const calcSlice = createSlice({
     name: 'calc',
     initialState,
     reducers: {
-        // Example of a regular reducer
+        // Example of a regular reducer for the intra-app state updates
         toggleIsWeightLoss: (state) => {
             state.isWeightLoss = !state.isWeightLoss;
         },
     },
-    // For async Thunks
-    // extraReducers: (builder) => {
-    //     builder
-    //         .addCase(fetchData.pending, (state) => {
-    //             state.status = 'loading';
-    //         })
-    //         .addCase(fetchData.fulfilled, (state, action) => {
-    //             state.status = 'succeeded';
-    //             state.data = action.payload;
-    //         })
-    //         .addCase(fetchData.rejected, (state, action) => {
-    //             state.status = 'failed';
-    //             state.error = action.payload;
-    //         });
-    // },
+    // For async Thunks - asynchronous updates to the state
+
+    extraReducers: (builder) => {
+        builder
+            .addCase(fetchData.pending, (state) => {
+                console.log(state)
+                fetchDataStart();
+            })
+            .addCase(fetchData.fulfilled, (state, action) => {
+                state = action.payload;
+                fetchDataSuccess();
+            })
+            .addCase(fetchData.rejected, (state, action) => {
+                fetchDataFailure('yo');
+            });
+    },
 });
 
 // Export the reducer
