@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { database } from '../../firebase/firebase';
-import { ref, get } from 'firebase/database';
+// import { database } from '../../firebase/firebase';
+// import { ref, get } from 'firebase/database';
 
 import { fetchDataStart, fetchDataFailure, fetchDataSuccess } from '../interface/interfaceSlice';
 
