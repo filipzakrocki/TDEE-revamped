@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { fetchData } from '../features/calc/calcSlice';
+import { fetchDataWithStates } from '../features/calc/calcSlice';
 import { signOut } from '../features/auth/authSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../app/store';
@@ -7,7 +7,6 @@ import { User } from 'firebase/auth';
 import { Button } from '@chakra-ui/react';
 
 const Calculator: React.FC = () => {
-
     const user: User | null = useSelector((state: RootState) => state.auth.user);
     const dispatch = useDispatch<AppDispatch>();
 
@@ -15,25 +14,22 @@ const Calculator: React.FC = () => {
         dispatch(signOut());
     };
 
-
     useEffect(() => {
         const uid = user?.uid;
 
         const fetchCalcData = async () => {
             try {
-
-                fetchData(`/states/${uid}`);
+                if (uid) await dispatch(fetchDataWithStates(uid)).unwrap();
             } catch (error) {
                 console.error("Error fetching Calc Data: ", error);
             }
         };
 
-        if (uid) fetchCalcData();
-    }, [user]);
-
+        fetchCalcData();
+    }, [user, dispatch]);
 
     return (
-        <div style={{background: 'yellow'}}>
+        <div style={{ background: 'yellow' }}>
             Calculator
             <Button colorScheme='red' variant='solid' mt={4} onClick={logOut}>
                 Log Out

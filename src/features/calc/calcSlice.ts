@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-// import { database } from '../../firebase/firebase';
-// import { ref, get } from 'firebase/database';
+import { database } from '../../firebase/firebase';
+import { ref, get } from 'firebase/database';
 
 import { fetchDataStart, fetchDataFailure, fetchDataSuccess } from '../interface/interfaceSlice';
 
@@ -69,14 +69,18 @@ const initialState: CalcState = {
     ]
 };
 
-export const fetchData = createAsyncThunk('calc/fetchData', async (path: string) => {
-    const response = await fetch(path);
-
-    if (!response.ok) {
-        throw new Error('Network response was not ok');
-    }
-    const data = await response.json();
-    return data;
+export const fetchDataWithStates = createAsyncThunk('calc/fetchData', async (uid: string, {rejectWithValue}) => {
+    try {
+        const dataRef = ref(database, `states/${uid}`);
+        const snapshot = await get(dataRef);
+        if (snapshot.exists()) {
+          return snapshot.val();
+        } else {
+          throw new Error('No data available');
+        }
+      } catch (error) {
+        return rejectWithValue(error);
+      }
 });
 
 // Create the slice
@@ -89,20 +93,19 @@ const calcSlice = createSlice({
             state.isWeightLoss = !state.isWeightLoss;
         },
     },
-    // For async Thunks - asynchronous updates to the state
 
+    // For async Thunks - asynchronous updates to the state
     extraReducers: (builder) => {
         builder
-            .addCase(fetchData.pending, (state) => {
-                console.log(state)
+            .addCase(fetchDataWithStates.pending, (state) => {
                 fetchDataStart();
             })
-            .addCase(fetchData.fulfilled, (state, action) => {
+            .addCase(fetchDataWithStates.fulfilled, (state, action) => {
                 state = action.payload;
                 fetchDataSuccess();
             })
-            .addCase(fetchData.rejected, (state, action) => {
-                fetchDataFailure('yo');
+            .addCase(fetchDataWithStates.rejected, (state, action) => {
+                fetchDataFailure('Error fetching data');
             });
     },
 });
