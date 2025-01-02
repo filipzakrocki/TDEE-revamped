@@ -7,7 +7,7 @@ interface MainFrameProps {
 
 const MainFrame: React.FC<MainFrameProps> = ({ children }) => {
     return (
-        <Box bg='tomato' height={'calc(100vh - 120px)'} my={'60px'}>
+        <Box bg='white' height={'calc(100vh - 120px)'} my={'60px'}>
             {children}
         </Box>
     );

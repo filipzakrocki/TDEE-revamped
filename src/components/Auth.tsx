@@ -47,11 +47,11 @@ function Auth() {
 
 
     return (
-        <Box display="flex" justifyContent="center" alignItems="center" flexDirection='column' height="100vh">
-            <Box width='400px'>
+        <Box display="flex" justifyContent="center" alignItems="center" flexDirection='column' height="100vh" className='animated-bg'>
+            <Box width='400px' background={'white'} p={4}>
                 <Image src={require('../assets/tdeefitteal.png')} mb={10}/>
             </Box>
-            <Box width="400px">
+            <Box width="400px" background={'white'} p={4}>
                 <FormControl>
                     <FormLabel>Email</FormLabel>
                     <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
