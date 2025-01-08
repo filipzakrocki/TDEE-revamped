@@ -7,7 +7,7 @@ import { AppDispatch, RootState } from '../app/store';
 import { User } from 'firebase/auth';
 import { signIn,
     //  signOut, 
-     register } from '../features/auth/authSlice';
+     register } from '../stores/auth/authSlice';
 import { Input, Button, Box, FormControl, FormLabel, Image } from '@chakra-ui/react';
 
 function Auth() {

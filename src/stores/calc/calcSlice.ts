@@ -5,6 +5,8 @@ import { ref, get } from 'firebase/database';
 import { fetchDataStart, fetchDataFailure, fetchDataSuccess } from '../interface/interfaceSlice';
 
 interface CalcState {
+    fetched: boolean;
+    
     startDate: string;
     startWeight: number;
     goalWeight: number;
@@ -34,6 +36,8 @@ interface CalcState {
 }
 
 const initialState: CalcState = {
+    fetched: false,
+
     startDate: "",
     startWeight: 0,
     goalWeight: 0,
@@ -69,16 +73,23 @@ const initialState: CalcState = {
     ]
 };
 
-export const fetchDataWithStates = createAsyncThunk('calc/fetchData', async (uid: string, {rejectWithValue}) => {
+export const fetchDataWithStates = createAsyncThunk(
+    'calc/fetchData',
+    async (uid: string, {dispatch, rejectWithValue}) => {
     try {
+        dispatch(fetchDataStart());
         const dataRef = ref(database, `states/${uid}`);
         const snapshot = await get(dataRef);
         if (snapshot.exists()) {
+            dispatch(fetchDataSuccess());
+
           return snapshot.val();
         } else {
+            dispatch(fetchDataFailure('No data available'));
           throw new Error('No data available');
         }
       } catch (error) {
+        dispatch(fetchDataFailure('Error fetching data'));
         return rejectWithValue(error);
       }
 });
@@ -91,18 +102,19 @@ const calcSlice = createSlice({
         // Example of a regular reducer for the intra-app state updates
         toggleIsWeightLoss: (state) => {
             state.isWeightLoss = !state.isWeightLoss;
-        },
+        }
     },
 
     // For async Thunks - asynchronous updates to the state
     extraReducers: (builder) => {
+        // FetchDataWithStates - fetching the automatic state data
         builder
             .addCase(fetchDataWithStates.pending, (state) => {
-                fetchDataStart();
+                console.log('Data fetching started');
             })
             .addCase(fetchDataWithStates.fulfilled, (state, action) => {
+                console.log('Data fetched - set as state')
                 state = action.payload;
-                fetchDataSuccess();
             })
             .addCase(fetchDataWithStates.rejected, (state, action) => {
                 fetchDataFailure('Error fetching data');

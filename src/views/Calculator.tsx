@@ -1,14 +1,18 @@
 import React, { useEffect } from 'react';
-import { fetchDataWithStates } from '../features/calc/calcSlice';
-import { signOut } from '../features/auth/authSlice';
+import { fetchDataWithStates } from '../stores/calc/calcSlice';
+import { signOut } from '../stores/auth/authSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../app/store';
 import { User } from 'firebase/auth';
-import { Button } from '@chakra-ui/react';
+import { Button, Text } from '@chakra-ui/react';
+import { useCustomToast } from '../utils/useCustomToast';
 
 const Calculator: React.FC = () => {
     const user: User | null = useSelector((state: RootState) => state.auth.user);
     const dispatch = useDispatch<AppDispatch>();
+    const showToast = useCustomToast();
+
+    const [fetchTrigger, setFetchTrigger] = React.useState(false);
 
     const logOut = () => {
         dispatch(signOut());
@@ -16,23 +20,32 @@ const Calculator: React.FC = () => {
 
     useEffect(() => {
         const uid = user?.uid;
+        if (!uid) return;
 
         const fetchCalcData = async () => {
             try {
-                if (uid) await dispatch(fetchDataWithStates(uid)).unwrap();
+                const data = await dispatch(fetchDataWithStates(uid)).unwrap();
+                if (data) {
+                    showToast({ description: 'Calc Data Fetched', status: 'success' });
+                }
             } catch (error) {
                 console.error("Error fetching Calc Data: ", error);
+                showToast({ description: 'Error fetching Calc Data', status: 'error' });
             }
         };
 
         fetchCalcData();
-    }, [user, dispatch]);
+
+    }, [dispatch, user, showToast, fetchTrigger]);
 
     return (
-        <div style={{ background: 'yellow' }}>
-            Calculator
+        <div style={{ background: 'gray', height: '100%' }}>
+            <Text>Calculator</Text>
             <Button colorScheme='red' variant='solid' mt={4} onClick={logOut}>
                 Log Out
+            </Button>
+            <Button colorScheme='red' variant='solid' mt={4} onClick={() => setFetchTrigger(!fetchTrigger)}>
+                Manual Fetch
             </Button>
         </div>
     );

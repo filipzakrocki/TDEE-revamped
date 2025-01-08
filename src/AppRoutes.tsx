@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Auth from './components/Auth';
-import Calculator from './components/Calculator';
+import Auth from './views/Auth';
+import Calculator from './views/Calculator';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import MainFrame from './components/MainFrame';
