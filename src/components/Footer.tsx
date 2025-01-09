@@ -8,7 +8,7 @@ import { InterfaceState } from "../stores/interface/interfaceSlice";
 const Footer: React.FC = () => {
     const [currentDateTime, setCurrentDateTime] = useState(new Date().toLocaleString());
 
-    const { loading}: InterfaceState = useSelector((state: RootState) => state.interface);
+    const { loading }: InterfaceState = useSelector((state: RootState) => state.interface);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -21,7 +21,7 @@ const Footer: React.FC = () => {
     return (
         <Box bg="gray.200" py={4} position='fixed' bottom={0} left={0} right={0} height={'60px'} >
             <Flex justifyContent="space-between" alignItems="center" px={8}>
-                {!loading ? <Spinner size="lg" color="teal" /> : <Text fontSize="sm">Not Loading</Text>}
+                {loading ? <Spinner size="lg" color="teal" /> : <Text fontSize="sm">Not Loading</Text>}
                 <Text fontSize="sm">{currentDateTime}</Text>
             </Flex>
         </Box>

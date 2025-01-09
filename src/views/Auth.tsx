@@ -5,15 +5,19 @@ import { useSelector, useDispatch } from 'react-redux';
 // AppDispatch and RootState are used to type the useDispatch and useSelector hooks
 import { AppDispatch, RootState } from '../app/store';
 import { User } from 'firebase/auth';
-import { signIn,
-    //  signOut, 
-     register } from '../stores/auth/authSlice';
+import { signIn, register } from '../stores/auth/authSlice';
+import { InterfaceState } from "../stores/interface/interfaceSlice";
 import { Input, Button, Box, FormControl, FormLabel, Image } from '@chakra-ui/react';
+import { useCustomToast } from '../utils/useCustomToast';
+
 
 function Auth() {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
+    const showToast = useCustomToast();
+
     const user: User | null = useSelector((state: RootState) => state.auth.user);
+    const { loading }: InterfaceState = useSelector((state: RootState) => state.interface);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -28,14 +32,16 @@ function Auth() {
         if (password === confirmPassword) {
             dispatch(register({ email, password }));
         } else {
-            // Handle password mismatch error
-            console.log('Passwords do not match');
+            showToast({
+                title: 'Error',
+                description: 'Passwords do not match',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            })
+            
         }
     };
-
-    // const handleSignOut = () => {
-    //     dispatch(signOut());
-    // };
 
     const toggleForm = () => {
         setIsRegistering(!isRegistering);
@@ -44,8 +50,7 @@ function Auth() {
     useEffect(() => {
         if (user) navigate('/calculator');
     }, [user, navigate]);
-
-
+    
     return (
         <Box display="flex" justifyContent="center" alignItems="center" flexDirection='column' height="100vh" className='animated-bg'>
             <Box width='400px' background={'white'} p={4}>
@@ -81,7 +86,7 @@ function Auth() {
                         {isRegistering ? 'Switch to sign in' : 'Switch to sign up'}
                     </Button>
                     <Button colorScheme='teal' variant='solid' mt={4} onClick={isRegistering ? handleRegister : handleSignIn}>
-                        {isRegistering ? 'Sign Up' : 'Sign In'}
+                        {isRegistering ? 'Sign Up' : loading ? 'Loading...' : 'Sign In'}
                     </Button>
                 </Box>
             </Box>

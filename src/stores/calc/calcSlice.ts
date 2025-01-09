@@ -76,8 +76,8 @@ const initialState: CalcState = {
 export const fetchDataWithStates = createAsyncThunk(
     'calc/fetchData',
     async (uid: string, {dispatch, rejectWithValue}) => {
-    try {
         dispatch(fetchDataStart());
+    try {
         const dataRef = ref(database, `states/${uid}`);
         const snapshot = await get(dataRef);
         if (snapshot.exists()) {
