@@ -1,15 +1,19 @@
 import React, { useEffect } from 'react';
-import { fetchDataWithStates } from '../stores/calc/calcSlice';
+import { fetchDataWithStates, CalcState } from '../stores/calc/calcSlice';
+import { useNavigate } from 'react-router-dom';
 import { signOut } from '../stores/auth/authSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../app/store';
 import { User } from 'firebase/auth';
-import { Button, Text } from '@chakra-ui/react';
+import { Button, Text, Container } from '@chakra-ui/react';
 import { useCustomToast } from '../utils/useCustomToast';
 
 const Calculator: React.FC = () => {
     const user: User | null = useSelector((state: RootState) => state.auth.user);
+    const calculator: CalcState | null  = useSelector((state: RootState) => state.calc);
+
     const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
     const showToast = useCustomToast();
 
     const [fetchTrigger, setFetchTrigger] = React.useState(false);
@@ -39,15 +43,11 @@ const Calculator: React.FC = () => {
     }, [dispatch, user, showToast, fetchTrigger]);
 
     return (
-        <div style={{ background: 'gray', height: '100%' }}>
+        <Container maxW='1200px' bg='red.100'>
             <Text>Calculator</Text>
-            <Button colorScheme='red' variant='solid' mt={4} onClick={logOut}>
-                Log Out
-            </Button>
-            <Button colorScheme='red' variant='solid' mt={4} onClick={() => setFetchTrigger(!fetchTrigger)}>
-                Manual Fetch
-            </Button>
-        </div>
+            <Button onClick={logOut}>Log Out</Button>
+            <Button onClick={() => navigate('/faq')}>Navigate to Faq</Button>
+        </Container>
     );
 };
 

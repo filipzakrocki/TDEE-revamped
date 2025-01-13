@@ -4,7 +4,7 @@ import { ref, get } from 'firebase/database';
 
 import { fetchDataStart, fetchDataFailure, fetchDataSuccess } from '../interface/interfaceSlice';
 
-interface CalcState {
+export interface CalcState {
     fetched: boolean;
     
     startDate: string;
@@ -110,10 +110,9 @@ const calcSlice = createSlice({
         // FetchDataWithStates - fetching the automatic state data
         builder
             .addCase(fetchDataWithStates.pending, (state) => {
-                console.log('Data fetching started');
             })
             .addCase(fetchDataWithStates.fulfilled, (state, action) => {
-                console.log('Data fetched - set as state')
+                console.log('fulfilled', action.payload);
                 state = action.payload;
             })
             .addCase(fetchDataWithStates.rejected, (state, action) => {
