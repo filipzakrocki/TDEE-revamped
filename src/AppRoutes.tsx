@@ -4,7 +4,7 @@ import { Box, Flex } from '@chakra-ui/react';
 import Auth from './views/Auth';
 import Calculator from './views/Calculator';
 import Header from './components/Header';
-import Footer from './components/Footer';
+// import Footer from './components/Footer';
 import MainFrame from './components/MainFrame';
 import { config } from './config';
 
