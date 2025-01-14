@@ -10,12 +10,12 @@ const Header: React.FC = () => {
     return (
         <Box position='fixed' top={0} left={0} right={0} height={height}>
             <Flex flex={1} width='100%'  align="center" height={height}>
-                <Box flex="8" p='4' bgGradient={config.headerLeft} color='black' height={height}>
+                <Box flex="8" padding={config.padding} bg={config.headerLeft} color='black' height={height}>
                     <Box flex='row' display='flex' alignItems='center'>
                         <Image src={logo} alt="TDEE Fit" height='25px'/>
                     </Box>
                 </Box>
-                <Box flex="2" p="4" bgGradient={config.headerRight} color='black' height={height}>
+                <Box flex="2" padding={config.padding} bg={config.headerRight} minW={config.minRightPanelWidth} color='black' height={height}>
                 </Box>
             </Flex>
         </Box>

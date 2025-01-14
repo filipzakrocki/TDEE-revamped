@@ -18,14 +18,14 @@ const PrivateRoute = ({ view, menu }: { view: JSX.Element, menu?: JSX.Element })
       <Flex direction="column" minH="100vh">
         <Flex flex="1" width="100%">
           {/* View area */}
-          <Box flex="8" p="4" bgGradient={config.backgroundLeft} color='black'>
+          <Box flex="8" p={config.padding} bg={config.backgroundLeft} color='black'>
             <MainFrame>
               {view}
             </MainFrame>
           </Box>
           {/* Menu area */}
-          {menu && <Box flex="2" minW={'300px'} p="4" bgGradient={config.backgroundRight} color='black'>
-            <MainFrame>
+          {menu && <Box flex="2" minW={config.minRightPanelWidth} p={config.padding} bg={config.backgroundRight} color='black'>
+            <MainFrame bg={config.backgroundRight}>
               {menu}
             </MainFrame>
           </Box>}
@@ -39,7 +39,7 @@ const AppRoutes = (): JSX.Element => {
   return (
     <Routes>
       <Route path="/" element={<Auth />} />
-      <Route path="/calculator" element={<PrivateRoute view={<Calculator />} menu={<p>da dog</p>} />} />
+      <Route path="/calculator" element={<PrivateRoute view={<Calculator />} menu={<p>.</p>} />} />
       <Route path="/faq" element={<PrivateRoute view={<div>Faq</div>} />} />
     </Routes>
   );

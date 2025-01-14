@@ -4,14 +4,15 @@ import { config } from '../config';
 
 interface MainFrameProps {
     children: ReactNode;
+    bg?: string;
 }
 
-const MainFrame: React.FC<MainFrameProps> = ({ children }) => {
+const MainFrame: React.FC<MainFrameProps> = ({ children, bg }) => {
     const height = config.mainFrameHeight();
     const space = config.headerHeight;
 
     return (
-        <Box bg='gray.100' height={height} mt={space + 'px'}>
+        <Box bg={bg || 'gray.100'} height={height} mt={space + 'px'}>
             {children}
         </Box>
     );

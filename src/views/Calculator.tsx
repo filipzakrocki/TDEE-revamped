@@ -43,7 +43,7 @@ const Calculator: React.FC = () => {
     }, [dispatch, user, showToast, fetchTrigger]);
 
     return (
-        <Container maxW='1200px' bg='red.100'>
+        <Container bg='red.100' minW='100%'>
             <Text>Calculator</Text>
             <Button onClick={logOut}>Log Out</Button>
             <Button onClick={() => navigate('/faq')}>Navigate to Faq</Button>
