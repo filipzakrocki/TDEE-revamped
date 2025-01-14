@@ -47,7 +47,7 @@ const Calculator: React.FC = () => {
 
     const weeks = Array.from({ length: 5 }).map((_, index) => ({
         weekNumber: 5 - index,
-        startDate: moment().subtract(3 - index, 'weeks').format('DD MMM YYYY')
+        startDate: moment().subtract(index, 'weeks').startOf('week').format('DD MMM YYYY')
     }));
 
     // Silencing strict mode warning
@@ -89,6 +89,7 @@ const Calculator: React.FC = () => {
                                         transition="all 0.2s"
                                     >
                                         <Text mb={2}>{day}</Text>
+                                        <Text mb={2}>{moment(week.startDate, 'DD MMM YYYY').add(colIndex, 'days').format('DD MMM YYYY')}</Text>
                                         <Input placeholder="Calories" mb={2} />
                                         <Input placeholder="Weight" />
                                     </Box>

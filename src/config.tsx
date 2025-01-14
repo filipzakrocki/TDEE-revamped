@@ -13,10 +13,10 @@ interface Config {
 }
 
 export const config: Config = {
-    backgroundLeft: "transparent",
-    backgroundRight: "#1f3c4d",
     headerLeft: "#1f3c4d",
     headerRight: "#04e0be",
+    backgroundLeft: "transparent",
+    backgroundRight: "#1f3c4d",
     padding: 6,
     headerHeight: 80,
     footerHeight: 60,
