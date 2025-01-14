@@ -18,13 +18,13 @@ const PrivateRoute = ({ view, menu }: { view: JSX.Element, menu?: JSX.Element })
       <Flex direction="column" minH="100vh">
         <Flex flex="1" width="100%">
           {/* View area */}
-          <Box flex="8" p={config.padding} bg={config.backgroundLeft} color='black' overflow={'auto'}>
+          <Box flex={config.leftPanelWidth} p={config.padding} bg={config.backgroundLeft} color='black' overflow={'auto'}>
             <MainFrame>
               {view}
             </MainFrame>
           </Box>
           {/* Menu area */}
-          {menu && <Box flex="2" minW={config.minRightPanelWidth} p={config.padding} bg={config.backgroundRight} color='black' overflow={'auto'}>
+          {menu && <Box flex={config.rightPanelWidth} minW={config.minRightPanelWidth} p={config.padding} bg={config.backgroundRight} color='black' overflow={'auto'}>
             <MainFrame bg={config.backgroundRight}>
               {menu}
             </MainFrame>
