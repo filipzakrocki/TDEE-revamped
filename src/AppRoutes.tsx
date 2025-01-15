@@ -1,12 +1,17 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Box, Flex } from '@chakra-ui/react';
-import Auth from './views/Auth';
-import Calculator from './views/Calculator';
-import Header from './components/Header';
-// import Footer from './components/Footer';
-import MainFrame from './components/MainFrame';
 import { config } from './config';
+
+// Views
+import Auth from './views/Auth';
+import Calculator from './views/Calculator';import Analysis from './views/Analysis';
+import Faq from './views/Faq';
+
+// Components
+import { Box, Flex } from '@chakra-ui/react';
+import Header from './components/Header';
+import MainFrame from './components/MainFrame';
+
 
 const PrivateRoute = ({ view, menu }: { view: JSX.Element, menu?: JSX.Element }): JSX.Element => {
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
@@ -40,7 +45,8 @@ const AppRoutes = (): JSX.Element => {
     <Routes>
       <Route path="/" element={<Auth />} />
       <Route path="/calculator" element={<PrivateRoute view={<Calculator />} menu={<p>.</p>} />} />
-      <Route path="/faq" element={<PrivateRoute view={<div>Faq</div>} />} />
+      <Route path="/analysis" element={<PrivateRoute view={<Analysis/>} />} />
+      <Route path="/faq" element={<PrivateRoute view={<Faq/>} />} />
     </Routes>
   );
 };

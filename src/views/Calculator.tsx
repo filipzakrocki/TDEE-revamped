@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { fetchDataWithStates, CalcState } from '../stores/calc/calcSlice';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from '../stores/auth/authSlice';
@@ -19,7 +19,7 @@ const Calculator: React.FC = () => {
     const navigate = useNavigate();
     const showToast = useCustomToast();
 
-    const [fetchTrigger, setFetchTrigger] = React.useState(false);
+    const [fetchTrigger] = useState(false);
 
     const logOut = () => {
         dispatch(signOut());
@@ -43,23 +43,22 @@ const Calculator: React.FC = () => {
 
         fetchCalcData();
 
-    }, [dispatch, user, showToast, fetchTrigger]);
-
-    const weeks = Array.from({ length: 5 }).map((_, index) => ({
-        weekNumber: 5 - index,
-        startDate: moment().subtract(index, 'weeks').startOf('week').format('DD MMM YYYY')
-    }));
+        // eslint-disable-next-line
+    }, [user, dispatch, fetchTrigger]);
 
     // Silencing strict mode warning
-    console.log(calculator, setFetchTrigger)
+
+    const getWeekData = () => {
+        const weekData = calculator.weekData;
+        return weekData
+        .filter(w => w.week)
+    }
 
     return (
-        <Container bg='red.100' minW='100%'>
+        <Container minW='100%'>
             <Text>Calculator</Text>
-            <Button onClick={logOut}>Log Out</Button>
-            <Button onClick={() => navigate('/faq')}>Navigate to Faq</Button>
             <Grid templateColumns="repeat(8, 1fr)" gap={4} mt={4}>
-                {weeks.map((week, rowIndex) => (
+                {getWeekData().map((week, rowIndex) => (
                     <React.Fragment key={rowIndex}>
                         <GridItem colSpan={1}>
                             <Box
@@ -71,13 +70,13 @@ const Calculator: React.FC = () => {
                                 _hover={{ transform: 'translateY(-5px)', boxShadow: 'lg' }}
                                 transition="all 0.2s"
                             >
-                                <Text mb={2}>Week {week.weekNumber}</Text>
-                                <Text>{week.startDate}</Text>
+                                <Text mb={2}>Week {week.week}</Text>
+                                <Text>{moment(calculator.startDate).add('weeks', rowIndex).format('DD-MMM-YYYY')}</Text>
                             </Box>
                         </GridItem>
                         <GridItem colSpan={7}>
                             <SimpleGrid columns={7} spacing={4}>
-                                {daysOfWeek.map((day, colIndex) => (
+                                {week.days.map((day, colIndex) => (
                                     <Box
                                         key={`${rowIndex}-${colIndex}`}
                                         p={4}
@@ -88,17 +87,20 @@ const Calculator: React.FC = () => {
                                         _hover={{ transform: 'translateY(-5px)', boxShadow: 'lg' }}
                                         transition="all 0.2s"
                                     >
-                                        <Text mb={2}>{day}</Text>
-                                        <Text mb={2}>{moment(week.startDate, 'DD MMM YYYY').add(colIndex, 'days').format('DD MMM YYYY')}</Text>
-                                        <Input placeholder="Calories" mb={2} />
-                                        <Input placeholder="Weight" />
+                                        <Text mb={2}>{daysOfWeek[colIndex]}</Text>
+                                        <Text mb={2}>{moment().subtract(week.week, 'weeks').startOf('week').add(colIndex, 'days').format('DD MMM YYYY')}</Text>
+                                        <Input placeholder="Calories" mb={2} value={day.kcal ?? ''} readOnly />
+                                        <Input placeholder="Weight" value={day.kg ?? ''} readOnly />
                                     </Box>
                                 ))}
                             </SimpleGrid>
                         </GridItem>
                     </React.Fragment>
-                ))}
+                )).reverse()}
             </Grid>
+            <Button onClick={logOut}>Log Out</Button>
+            <Button onClick={() => navigate('/faq')}>Navigate to Faq</Button>
+            <Button onClick={() => navigate('/analysis')}>Navigate to Analysis</Button>
         </Container>
     );
 };

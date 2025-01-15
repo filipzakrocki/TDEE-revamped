@@ -54,23 +54,7 @@ const initialState: CalcState = {
     initialInputsLocked: false,
     tdee: 0,
     isCompactView: false,
-    weekData: [
-        {
-            week: 0,
-            days: [
-                { kg: null, kcal: null },
-                { kg: null, kcal: null },
-                { kg: null, kcal: null },
-                { kg: null, kcal: null },
-                { kg: null, kcal: null },
-                { kg: null, kcal: null },
-                { kg: null, kcal: null },
-            ],
-            avgKcal: 0,
-            avgWeight: 0,
-            locked: false
-        }
-    ]
+    weekData: []
 };
 
 export const fetchDataWithStates = createAsyncThunk(
@@ -113,7 +97,7 @@ const calcSlice = createSlice({
             })
             .addCase(fetchDataWithStates.fulfilled, (state, action) => {
                 console.log('fulfilled', action.payload);
-                state = action.payload;
+                return {...state, ...action.payload}
             })
             .addCase(fetchDataWithStates.rejected, (state, action) => {
                 fetchDataFailure('Error fetching data');
