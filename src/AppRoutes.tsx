@@ -4,8 +4,10 @@ import { config } from './config';
 
 // Views
 import Auth from './views/Auth';
-import Calculator from './views/Calculator';import Analysis from './views/Analysis';
+import Calculator from './views/Calculator';
+import Analysis from './views/Analysis';
 import Faq from './views/Faq';
+import Logout from './views/Logout';
 
 // Components
 import { Box, Flex } from '@chakra-ui/react';
@@ -47,6 +49,7 @@ const AppRoutes = (): JSX.Element => {
       <Route path="/calculator" element={<PrivateRoute view={<Calculator />} menu={<p>.</p>} />} />
       <Route path="/analysis" element={<PrivateRoute view={<Analysis/>} />} />
       <Route path="/faq" element={<PrivateRoute view={<Faq/>} />} />
+      <Route path="/logout" element={<PrivateRoute view={<Logout/>} />} />
     </Routes>
   );
 };

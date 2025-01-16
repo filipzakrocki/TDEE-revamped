@@ -18,7 +18,7 @@ export const config: Config = {
     backgroundLeft: "transparent",
     backgroundRight: "#1f3c4d",
     padding: 6,
-    headerHeight: 80,
+    headerHeight: 40,
     footerHeight: 60,
     leftPanelWidth: 9,
     rightPanelWidth: 2,

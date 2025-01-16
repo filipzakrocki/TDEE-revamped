@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { fetchDataWithStates, CalcState } from '../stores/calc/calcSlice';
-import { useNavigate } from 'react-router-dom';
 import { signOut } from '../stores/auth/authSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../app/store';
@@ -16,7 +15,6 @@ const Calculator: React.FC = () => {
     const calculator: CalcState | null  = useSelector((state: RootState) => state.calc);
 
     const dispatch = useDispatch<AppDispatch>();
-    const navigate = useNavigate();
     const showToast = useCustomToast();
 
     const [fetchTrigger] = useState(false);
@@ -27,6 +25,7 @@ const Calculator: React.FC = () => {
 
     useEffect(() => {
         const uid = user?.uid;
+        console.log(uid)
         if (!uid) return;
 
         const fetchCalcData = async () => {
@@ -44,7 +43,7 @@ const Calculator: React.FC = () => {
         fetchCalcData();
 
         // eslint-disable-next-line
-    }, [user, dispatch, fetchTrigger]);
+    }, [ fetchTrigger]);
 
     // Silencing strict mode warning
 
@@ -99,8 +98,6 @@ const Calculator: React.FC = () => {
                 )).reverse()}
             </Grid>
             <Button onClick={logOut}>Log Out</Button>
-            <Button onClick={() => navigate('/faq')}>Navigate to Faq</Button>
-            <Button onClick={() => navigate('/analysis')}>Navigate to Analysis</Button>
         </Container>
     );
 };

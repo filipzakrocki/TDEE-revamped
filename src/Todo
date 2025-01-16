@@ -1,6 +1,11 @@
 # TODO List for TDEE-revamped Project
 
+[ ] Boilerplate
+
 [ ] Components for week
 [ ] Components for day
 [ ] New Week button
-[ ] Navigation icon menu in top/top-right of the left Header
+[X] Navigation icon menu in top/top-right of the left Header
+[ ] Correct icon menu
+[X] Logout view
+[X] Dont try to fetch on logout
