@@ -2,10 +2,14 @@
 
 [ ] Boilerplate
 
-[ ] Components for week
-[ ] Components for day
 [ ] New Week button
-[X] Navigation icon menu in top/top-right of the left Header
 [ ] Correct icon menu
+[ ] Fix mess with Week/Day Component dates
+
+Done:
+
 [X] Logout view
 [X] Dont try to fetch on logout
+[X] Navigation icon menu in top/top-right of the left Header
+[X] Components for week
+[X] Components for day

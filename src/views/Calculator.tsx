@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useCustomToast } from '../utils/useCustomToast';
+
 import { fetchDataWithStates, CalcState } from '../stores/calc/calcSlice';
 import { signOut } from '../stores/auth/authSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../app/store';
 import { User } from 'firebase/auth';
-import { Button, Text, Container, SimpleGrid, Box, Input, Grid, GridItem } from '@chakra-ui/react';
-import { useCustomToast } from '../utils/useCustomToast';
-import moment from 'moment';
 
-const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+import { Button, Text, Container, Grid } from '@chakra-ui/react';
+import WeekRow from '../components/WeekRow';
 
 const Calculator: React.FC = () => {
     const user: User | null = useSelector((state: RootState) => state.auth.user);
@@ -49,53 +49,18 @@ const Calculator: React.FC = () => {
 
     const getWeekData = () => {
         const weekData = calculator.weekData;
-        return weekData
-        .filter(w => w.week)
-    }
+        return weekData.filter(w => w.week);
+    };
+
+    console.log(getWeekData());
 
     return (
         <Container minW='100%'>
             <Text>Calculator</Text>
             <Grid templateColumns="repeat(8, 1fr)" gap={4} mt={4}>
-                {getWeekData().map((week, rowIndex) => (
-                    <React.Fragment key={rowIndex}>
-                        <GridItem colSpan={1}>
-                            <Box
-                                p={4}
-                                bg="white"
-                                boxShadow="md"
-                                borderRadius="md"
-                                textAlign="center"
-                                _hover={{ transform: 'translateY(-5px)', boxShadow: 'lg' }}
-                                transition="all 0.2s"
-                            >
-                                <Text mb={2}>Week {week.week}</Text>
-                                <Text>{moment(calculator.startDate).add('weeks', rowIndex).format('DD-MMM-YYYY')}</Text>
-                            </Box>
-                        </GridItem>
-                        <GridItem colSpan={7}>
-                            <SimpleGrid columns={7} spacing={4}>
-                                {week.days.map((day, colIndex) => (
-                                    <Box
-                                        key={`${rowIndex}-${colIndex}`}
-                                        p={4}
-                                        bg="white"
-                                        boxShadow="md"
-                                        borderRadius="md"
-                                        textAlign="center"
-                                        _hover={{ transform: 'translateY(-5px)', boxShadow: 'lg' }}
-                                        transition="all 0.2s"
-                                    >
-                                        <Text mb={2}>{daysOfWeek[colIndex]}</Text>
-                                        <Text mb={2}>{moment().subtract(week.week, 'weeks').startOf('week').add(colIndex, 'days').format('DD MMM YYYY')}</Text>
-                                        <Input placeholder="Calories" mb={2} value={day.kcal ?? ''} readOnly />
-                                        <Input placeholder="Weight" value={day.kg ?? ''} readOnly />
-                                    </Box>
-                                ))}
-                            </SimpleGrid>
-                        </GridItem>
-                    </React.Fragment>
-                )).reverse()}
+                {getWeekData().reverse().map((week, rowIndex) => (
+                    <WeekRow key={rowIndex} week={week} rowIndex={rowIndex} startDate={calculator.startDate} />
+                ))}
             </Grid>
             <Button onClick={logOut}>Log Out</Button>
         </Container>
