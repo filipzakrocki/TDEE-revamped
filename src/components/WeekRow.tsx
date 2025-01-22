@@ -33,7 +33,8 @@ const WeekRow: React.FC<WeekRowProps> = ({ week, rowIndex, startDate }) => {
                         <DayCell
                             key={colIndex}
                             day={day}
-                            colIndex={colIndex}
+                            weekNumber={week.week}
+                            dayIndex={colIndex}
                             rowIndex={rowIndex}
                             date={moment(startDate).add(week.week - 1, 'weeks').add(colIndex, 'days')}
                         />

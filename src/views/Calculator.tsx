@@ -33,7 +33,7 @@ const Calculator: React.FC = () => {
             try {
                 const data = await dispatch(fetchDataWithStates(uid)).unwrap();
                 if (data) {
-                    showToast({ description: 'Calc Data Fetched', status: 'success' });
+                    showToast({ description: 'Data Fetched!', status: 'success' });
                 }
             } catch (error) {
                 console.error("Error fetching Calc Data: ", error);

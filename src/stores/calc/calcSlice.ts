@@ -94,7 +94,12 @@ const calcSlice = createSlice({
                 locked: false
             };
             state.weekData.push(newWeek);
-        }
+        },
+        updateDay: (state, action) => {
+            const { dayIndex, weekNumber, type, value } = action.payload;
+            const dayObject = state.weekData[weekNumber].days[dayIndex];
+            dayObject[type as 'kg' | 'kcal'] = value;
+        },
     },
 
     // For async Thunks - asynchronous updates to the state
@@ -114,7 +119,7 @@ const calcSlice = createSlice({
 });
 
 // Export the actions
-export const { addNewWeek } = calcSlice.actions;
+export const { addNewWeek, updateDay } = calcSlice.actions;
 
 // Export the reducer
 export default calcSlice.reducer;
