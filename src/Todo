@@ -4,6 +4,10 @@
 
 [ ] Correct icon menu
 [ ] Fix mess with Week/Day Component dates
+[ ] Heatmap for the days in 2 modes - kg/kcal in analysis
+[ ] wrapper for weight, something that will toggle between kg and lbs
+[ ] Maybe reduce main screen to just one week?
+
 
 Done:
 
