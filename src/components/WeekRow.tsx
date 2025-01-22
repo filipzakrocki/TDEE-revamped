@@ -10,7 +10,7 @@ interface WeekRowProps {
 }
 
 const WeekRow: React.FC<WeekRowProps> = ({ week, rowIndex, startDate }) => {
-    console.log(week)
+    // console.log(week)
     return (
         <>
             <GridItem colSpan={1}>

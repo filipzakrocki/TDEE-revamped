@@ -2,12 +2,12 @@
 
 [ ] Boilerplate
 
-[ ] New Week button
 [ ] Correct icon menu
 [ ] Fix mess with Week/Day Component dates
 
 Done:
 
+[x] New Week button
 [X] Logout view
 [X] Dont try to fetch on logout
 [X] Navigation icon menu in top/top-right of the left Header

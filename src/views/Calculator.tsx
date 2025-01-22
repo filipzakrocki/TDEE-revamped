@@ -8,7 +8,9 @@ import { AppDispatch, RootState } from '../app/store';
 import { User } from 'firebase/auth';
 
 import { Button, Text, Container, Grid } from '@chakra-ui/react';
+
 import WeekRow from '../components/WeekRow';
+import NewWeekButton from '../components/NewWeekButton';
 
 const Calculator: React.FC = () => {
     const user: User | null = useSelector((state: RootState) => state.auth.user);
@@ -17,7 +19,7 @@ const Calculator: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const showToast = useCustomToast();
 
-    const [fetchTrigger] = useState(false);
+    const [fetchTrigger, setFetchTrigger] = useState(false);
 
     const logOut = () => {
         dispatch(signOut());
@@ -25,7 +27,6 @@ const Calculator: React.FC = () => {
 
     useEffect(() => {
         const uid = user?.uid;
-        console.log(uid)
         if (!uid) return;
 
         const fetchCalcData = async () => {
@@ -57,6 +58,8 @@ const Calculator: React.FC = () => {
     return (
         <Container minW='100%'>
             <Text>Calculator</Text>
+            <NewWeekButton />
+            <Button onClick={() => setFetchTrigger(ft => !ft)}>Fetch Data</Button>
             <Grid templateColumns="repeat(8, 1fr)" gap={4} mt={4}>
                 {getWeekData().reverse().map((week, rowIndex) => (
                     <WeekRow key={rowIndex} week={week} rowIndex={rowIndex} startDate={calculator.startDate} />

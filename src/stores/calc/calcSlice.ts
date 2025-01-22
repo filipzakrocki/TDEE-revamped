@@ -57,6 +57,7 @@ const initialState: CalcState = {
     weekData: []
 };
 
+// Async actions
 export const fetchDataWithStates = createAsyncThunk(
     'calc/fetchData',
     async (uid: string, {dispatch, rejectWithValue}) => {
@@ -78,14 +79,21 @@ export const fetchDataWithStates = createAsyncThunk(
       }
 });
 
-// Create the slice
+// Calculator Slice of Redux store
 const calcSlice = createSlice({
     name: 'calc',
     initialState,
     reducers: {
         // Example of a regular reducer for the intra-app state updates
-        toggleIsWeightLoss: (state) => {
-            state.isWeightLoss = !state.isWeightLoss;
+        addNewWeek: (state) => {
+            const newWeek = {
+                week: state.weekData.length,
+                days: Array(7).fill({ kg: null, kcal: null }),
+                avgKcal: 0,
+                avgWeight: 0,
+                locked: false
+            };
+            state.weekData.push(newWeek);
         }
     },
 
@@ -105,9 +113,8 @@ const calcSlice = createSlice({
     },
 });
 
+// Export the actions
+export const { addNewWeek } = calcSlice.actions;
+
 // Export the reducer
 export default calcSlice.reducer;
-
-
-
-
