@@ -4,6 +4,17 @@ import { ref, get } from 'firebase/database';
 
 import { fetchDataStart, fetchDataFailure, fetchDataSuccess } from '../interface/interfaceSlice';
 
+interface WeekData {
+    week: number;
+    days: {
+        kg: number | '';
+        kcal: number | '';
+    }[];
+    avgKcal: number;
+    avgWeight: number;
+    locked: boolean;
+}
+
 export interface CalcState {
     fetched: boolean;
     
@@ -23,16 +34,7 @@ export interface CalcState {
     initialInputsLocked: boolean;
     tdee: number;
     isCompactView: boolean;
-    weekData: {
-        week: number;
-        days: {
-            kg: number | null;
-            kcal: number | null;
-        }[];
-        avgKcal: number;
-        avgWeight: number;
-        locked: boolean;
-    }[];
+    weekData: WeekData[];
 }
 
 const initialState: CalcState = {

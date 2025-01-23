@@ -1,20 +1,24 @@
 # TODO List for TDEE-revamped Project
 
-[ ] Boilerplate
-
 [ ] Correct icon menu
 [ ] Fix mess with Week/Day Component dates
 [ ] Heatmap for the days in 2 modes - kg/kcal in analysis
 [ ] wrapper for weight, something that will toggle between kg and lbs
 [ ] Maybe reduce main screen to just one week, and some colorization/sizing depending on if the goal was hit?
 [ ] rip off old methods and implement?
+[ ] week cards to have average weight/kcal/delta and TDEE
 
+# TODO Done
 
-Done:
-
+[X] creating custom hook for date inside the calculator
+[X] creating constants file
 [x] New Week button
 [X] Logout view
 [X] Dont try to fetch on logout
 [X] Navigation icon menu in top/top-right of the left Header
 [X] Components for week
 [X] Components for day
+
+# For Copying/Pasting
+[ ] Todo 
+[X] Done
