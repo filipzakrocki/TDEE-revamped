@@ -7,6 +7,7 @@ import Auth from './views/Auth';
 import Calculator from './views/Calculator';
 import Analysis from './views/Analysis';
 import Faq from './views/Faq';
+import Setup from './views/Setup';
 import Logout from './views/Logout';
 
 // Components
@@ -47,6 +48,7 @@ const AppRoutes = (): JSX.Element => {
     <Routes>
       <Route path="/" element={<Auth />} />
       <Route path="/calculator" element={<PrivateRoute view={<Calculator />} menu={<p>.</p>} />} />
+      <Route path="/setup" element={<PrivateRoute view={<Setup />} menu={<p>.</p>} />} />
       <Route path="/analysis" element={<PrivateRoute view={<Analysis/>} />} />
       <Route path="/faq" element={<PrivateRoute view={<Faq/>} />} />
       <Route path="/logout" element={<PrivateRoute view={<Logout/>} />} />

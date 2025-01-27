@@ -12,6 +12,7 @@ const IconMenu = () => {
     { icon: CalendarIcon, route: '/calculator' },
     { icon: DragHandleIcon, route: '/analysis' },
     { icon: QuestionIcon, route: '/faq' },
+    { icon: QuestionIcon, route: '/setup' },
     { icon: CloseIcon, route: '/logout' },
   ];
 

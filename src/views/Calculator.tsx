@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useCustomToast } from '../utils/useCustomToast';
 
 import { fetchDataWithStates, CalcState } from '../stores/calc/calcSlice';
-import { signOut } from '../stores/auth/authSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../app/store';
 import { User } from 'firebase/auth';
@@ -20,10 +19,6 @@ const Calculator: React.FC = () => {
     const showToast = useCustomToast();
 
     const [fetchTrigger, setFetchTrigger] = useState(false);
-
-    const logOut = () => {
-        dispatch(signOut());
-    };
 
     useEffect(() => {
         const uid = user?.uid;
@@ -65,7 +60,6 @@ const Calculator: React.FC = () => {
                     <WeekRow key={rowIndex} week={week} rowIndex={rowIndex} startDate={calculator.startDate} />
                 ))}
             </Grid>
-            <Button onClick={logOut}>Log Out</Button>
         </Container>
     );
 };
