@@ -1,5 +1,10 @@
 # TODO List for TDEE-revamped Project
 
+[ ] FIX THE LAYOUT AND MENU -> BUILD PRETTY -> CONNECT IT
+    focus on the layout and something you'd be happy to come back too first, use placeholders and charts and stuff
+
+
+
 [ ] Correct icon menu
 [ ] Fix mess with Week/Day Component dates
 [ ] Heatmap for the days in 2 modes - kg/kcal in analysis
