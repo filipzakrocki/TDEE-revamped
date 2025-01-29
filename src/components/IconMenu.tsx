@@ -1,36 +1,45 @@
-
-import { HStack, IconButton, useColorModeValue } from '@chakra-ui/react';
-import { CalendarIcon, QuestionIcon, DragHandleIcon, CloseIcon } from '@chakra-ui/icons';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { VStack, IconButton } from "@chakra-ui/react";
+import { Calendar, BarChart3, HelpCircle, Settings, LogOut } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {config} from '../config'
 
 const IconMenu = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const selectedColor = useColorModeValue('blue.200', 'red.200');
+
+  const defaultBg = "white";
+  const defaultIconColor = config.black;
+  const selectedBg = config.black;
+  const selectedIconColor = "white";
 
   const menuItems = [
-    { icon: CalendarIcon, route: '/calculator' },
-    { icon: DragHandleIcon, route: '/analysis' },
-    { icon: QuestionIcon, route: '/faq' },
-    { icon: QuestionIcon, route: '/setup' },
-    { icon: CloseIcon, route: '/logout' },
+    { icon: Calendar, route: "/calculator" },
+    { icon: BarChart3, route: "/analysis" }, // Fixed: Using 'BarChart3' instead of 'ChartNoAxesCombined'
+    { icon: HelpCircle, route: "/faq" },
+    { icon: Settings, route: "/setup" },
+    { icon: LogOut, route: "/logout" },
   ];
 
   return (
-    <HStack spacing={20}>
-      {menuItems.map((item, index) => (
-        <IconButton
-          key={index}
-          icon={<item.icon />}
-          aria-label={item.route}
-          onClick={() => navigate(item.route)}
-          color={location.pathname === item.route ? selectedColor : 'white'}
-          fontSize={'20px'}
-          variant={'solid'}
-          colorScheme='transparent'
-        />
-      ))}
-    </HStack>
+    <VStack spacing={5} mb={5}>
+      {menuItems.map((item, index) => {
+        const isSelected = location.pathname === item.route;
+        return (
+          <IconButton
+            key={index}
+            icon={<item.icon size={20} />}
+            aria-label={item.route}
+            onClick={() => navigate(item.route)}
+            bg={isSelected ? selectedBg : defaultBg}
+            color={isSelected ? selectedIconColor : defaultIconColor}
+            variant="solid"
+            isRound
+            transition="all 0.2s"
+            _hover={{ bg: selectedBg, color: selectedIconColor }}
+          />
+        );
+      })}
+    </VStack>
   );
 };
 

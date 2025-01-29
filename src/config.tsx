@@ -1,27 +1,47 @@
 interface Config {
+    backgroundColor: string;
+    backgroundNav: string;
     backgroundLeft: string;
     backgroundRight: string;
-    headerLeft: string;
-    headerRight: string;
+
+    green: string;
+    red: string;
+    orange: string;
+    purple: string;
+    black: string;
+    
     headerHeight: number;
     padding: number;
     footerHeight: number;
+    sidenavWidth: string;
     leftPanelWidth: number;
     rightPanelWidth: number;
     minRightPanelWidth: number;
-    mainFrameHeight: () => string;
+    mainFrameHeight:  string;
+    borderRadius: number;
 }
 
 export const config: Config = {
-    headerLeft: "#1f3c4d",
-    headerRight: "#04e0be",
+    // colors
+    backgroundColor: '#fbf9f7',
+    backgroundNav: '#f3ebe4',
     backgroundLeft: "transparent",
-    backgroundRight: "#1f3c4d",
-    padding: 6,
-    headerHeight: 40,
+    backgroundRight: "transparent",
+
+    green: '#c0f1dc',
+    red: '#f3c5c5',
+    orange: '#f9e1c0',
+    purple: '#d5d3ff',
+    black: '#0a060e',
+
+    // spacing
+    padding: 4,
+    headerHeight: 0,
     footerHeight: 60,
-    leftPanelWidth: 9,
-    rightPanelWidth: 2,
+    sidenavWidth: '100px',
+    leftPanelWidth: 20,
+    rightPanelWidth: 5,
     minRightPanelWidth: 300,
-    mainFrameHeight: (noFooter: boolean = false) => `calc(100vh - ${noFooter ? config.headerHeight : config.headerHeight + config.footerHeight}px)`,
+    mainFrameHeight: `calc(100vh - 50px)`,
+    borderRadius: 15
 };

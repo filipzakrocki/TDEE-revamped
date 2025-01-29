@@ -8,11 +8,10 @@ interface MainFrameProps {
 }
 
 const MainFrame: React.FC<MainFrameProps> = ({ children, bg }) => {
-    const height = config.mainFrameHeight();
-    const space = config.headerHeight;
+    const height = config.mainFrameHeight;
 
     return (
-        <Box bg={bg || 'gray.100'} height={height} mt={space + 'px'} sx={{ overflowY: 'auto' }}>
+        <Box bg={bg || 'gray.100'} height={height} sx={{ overflowY: 'auto' }} borderRadius={config.borderRadius}>
             {children}
         </Box>
     );

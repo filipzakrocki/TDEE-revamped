@@ -12,7 +12,7 @@ import Logout from './views/Logout';
 
 // Components
 import { Box, Flex } from '@chakra-ui/react';
-import Header from './components/Header';
+import Sidenav from './components/Sidenav'
 import MainFrame from './components/MainFrame';
 
 
@@ -21,25 +21,26 @@ const PrivateRoute = ({ view, menu }: { view: JSX.Element, menu?: JSX.Element })
   if (!isAuthenticated) return <Navigate to="/" />;
 
   return (
-    <>
-      <Header />
-      <Flex direction="column" minH="100vh">
-        <Flex flex="1" width="100%">
+        <Flex flex="1" width="100%" h={'100vh'} bg={config.backgroundColor}>
           {/* View area */}
-          <Box flex={config.leftPanelWidth} p={config.padding} bg={config.backgroundLeft} color='black' overflow={'auto'}>
+          <Box w={config.sidenavWidth} p={config.padding} color={config.black}>
+            <MainFrame>
+              <Sidenav />
+            </MainFrame>
+          </Box>
+          {/* View area */}
+          <Box flex={config.leftPanelWidth} p={config.padding} bg={config.backgroundLeft} color={config.black} overflow={'auto'}>
             <MainFrame>
               {view}
             </MainFrame>
           </Box>
           {/* Menu area */}
-          {menu && <Box flex={config.rightPanelWidth} minW={config.minRightPanelWidth} p={config.padding} bg={config.backgroundRight} color='black' overflow={'auto'}>
+          {menu && <Box flex={config.rightPanelWidth} minW={config.minRightPanelWidth} p={config.padding} bg={config.backgroundRight} color={config.black} overflow={'auto'}>
             <MainFrame bg={config.backgroundRight}>
               {menu}
             </MainFrame>
           </Box>}
         </Flex>
-      </Flex>
-    </>
   );
 };
 
