@@ -1,3 +1,5 @@
+import { Calendar, BarChart3, HelpCircle, Settings, LogOut } from "lucide-react";
+
 interface Config {
     backgroundColor: string;
     backgroundNav: string;
@@ -19,6 +21,14 @@ interface Config {
     minRightPanelWidth: number;
     mainFrameHeight:  string;
     borderRadius: number;
+
+    menuItems: MenuItem[]
+}
+
+interface MenuItem {
+    icon: React.ElementType;
+    route: string;
+    divider?: boolean;
 }
 
 export const config: Config = {
@@ -43,5 +53,13 @@ export const config: Config = {
     rightPanelWidth: 5,
     minRightPanelWidth: 300,
     mainFrameHeight: `calc(100vh - 50px)`,
-    borderRadius: 15
+    borderRadius: 15,
+
+    menuItems: [
+        { icon: Calendar, route: "/calculator" },
+        { icon: BarChart3, route: "/analysis" },
+        { icon: HelpCircle, route: "/faq", divider: true },
+        { icon: Settings, route: "/setup" },
+        { icon: LogOut, route: "/logout" },
+      ]
 };
