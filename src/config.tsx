@@ -1,6 +1,8 @@
 import { Calendar, BarChart3, HelpCircle, Settings, LogOut } from "lucide-react";
 
 interface Config {
+    startingPoint: string;
+
     backgroundColor: string;
     backgroundNav: string;
     backgroundLeft: string;
@@ -32,6 +34,9 @@ interface MenuItem {
 }
 
 export const config: Config = {
+    // misc
+    startingPoint: '/calculator',
+
     // colors
     backgroundColor: '#fbf9f7',
     backgroundNav: '#f3ebe4',
@@ -55,6 +60,7 @@ export const config: Config = {
     mainFrameHeight: `calc(100vh - 50px)`,
     borderRadius: 15,
 
+    // menu items
     menuItems: [
         { icon: Calendar, route: "/calculator" },
         { icon: BarChart3, route: "/analysis" },

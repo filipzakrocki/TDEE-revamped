@@ -9,6 +9,7 @@ import { signIn, register } from '../stores/auth/authSlice';
 import { InterfaceState } from "../stores/interface/interfaceSlice";
 import { Input, Button, Box, FormControl, FormLabel, Image } from '@chakra-ui/react';
 import { useCustomToast } from '../utils/useCustomToast';
+import { config } from '../config';
 
 
 function Auth() {
@@ -48,7 +49,7 @@ function Auth() {
     };
 
     useEffect(() => {
-        if (user) navigate('/calculator');
+        if (user) navigate(config.startingPoint);
     }, [user, navigate]);
     
     return (
