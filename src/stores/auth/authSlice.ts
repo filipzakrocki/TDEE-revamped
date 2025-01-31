@@ -1,10 +1,18 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { auth } from '../../firebase/firebase';
 import { User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { fetchDataStart, fetchDataFailure, fetchDataSuccess } from '../interface/interfaceSlice';
 
-export const signIn = createAsyncThunk('auth/signIn', async ({ email, password }: { email: string; password: string; }) => {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  return userCredential.user;
+export const signIn = createAsyncThunk('auth/signIn', async ({ email, password }: { email: string; password: string; }, {dispatch}) => {
+  dispatch(fetchDataStart());
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    if (userCredential) dispatch(fetchDataSuccess());
+    return userCredential.user;
+  } catch {
+    dispatch(fetchDataFailure('Invalid email or password'));
+    throw new Error('Invalid email or password');
+  }
 });
 
 export const signOut = createAsyncThunk('auth/signOut', async () => {

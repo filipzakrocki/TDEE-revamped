@@ -16,12 +16,12 @@ const interfaceSlice = createSlice({
     name: 'interface',
     initialState,
     reducers: {
-        fetchDataStart(state) {
+        fetchDataStart: (state) => {
             state.loading = true;
             state.error = null;
             state.status = 'pending';
         },
-        fetchDataSuccess(state) { // Replace 'any' with your specific data type
+        fetchDataSuccess(state: InterfaceState) { // Replace 'any' with your specific data type           
             state.loading = false;
             state.error = null;
             state.status = 'fulfilled';
@@ -31,7 +31,7 @@ const interfaceSlice = createSlice({
             state.error = action.payload;
             state.status = 'rejected';
         },
-        resetState(state) {
+        resetState(state: InterfaceState) {
             state.loading = false;
             state.error = null;
             state.status = 'idle';

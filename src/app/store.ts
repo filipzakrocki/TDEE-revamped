@@ -1,7 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from '../features/auth/authSlice';
-import calcReducer from '../features/calc/calcSlice';
-import interfaceReducer from '../features/interface/interfaceSlice';
+
+import authReducer from '../stores/auth/authSlice';
+import calcReducer from '../stores/calc/calcSlice';
+import interfaceReducer from '../stores/interface/interfaceSlice';
 
 const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: false,
     }),
+  devTools: process.env.NODE_ENV !== 'production',
 });
 
 export type RootState = ReturnType<typeof store.getState>;
