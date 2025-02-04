@@ -1,7 +1,7 @@
 import { VStack, IconButton } from "@chakra-ui/react";
 
 import { useLocation, useNavigate } from "react-router-dom";
-import {config} from '../config'
+import {config} from '../../config'
 
 const IconMenu = () => {
   const location = useLocation();

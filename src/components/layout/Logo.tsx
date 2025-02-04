@@ -1,6 +1,6 @@
 import React from 'react';
 import { Utensils } from "lucide-react";
-import { config } from '../config'
+import { config } from '../../config'
 import { Box, Text } from '@chakra-ui/react';
 
 const Logo: React.FC = () => {

@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { useCustomToast } from '../utils/useCustomToast';
+import React, { useEffect } from 'react';
+import { useCustomToast } from '../../utils/useCustomToast';
 
-import { fetchDataWithStates, CalcState } from '../stores/calc/calcSlice';
+import { fetchDataWithStates, CalcState } from '../../stores/calc/calcSlice';
 import { useSelector, useDispatch } from 'react-redux';
-import { AppDispatch, RootState } from '../app/store';
+import { AppDispatch, RootState } from '../../app/store';
 import { User } from 'firebase/auth';
 
-import { Button, Text, Container, Grid } from '@chakra-ui/react';
+import { Button, Text, Container, Grid, Heading } from '@chakra-ui/react';
 
-import WeekRow from '../components/WeekRow';
-import NewWeekButton from '../components/NewWeekButton';
+import WeekRow from '../../components/WeekRow';
+import NewWeekButton from '../../components/NewWeekButton';
 
 const Calculator: React.FC = () => {
     const user: User | null = useSelector((state: RootState) => state.auth.user);
@@ -17,8 +17,6 @@ const Calculator: React.FC = () => {
 
     const dispatch = useDispatch<AppDispatch>();
     const showToast = useCustomToast();
-
-    const [fetchTrigger, setFetchTrigger] = useState(false);
 
     useEffect(() => {
         const uid = user?.uid;
@@ -39,7 +37,7 @@ const Calculator: React.FC = () => {
         fetchCalcData();
 
         // eslint-disable-next-line
-    }, [ fetchTrigger]);
+    }, []);
 
     // Silencing strict mode warning
 
@@ -50,11 +48,23 @@ const Calculator: React.FC = () => {
 
     console.log(getWeekData());
 
+    const handleFetchData = () => {
+        if (!user?.uid) return;
+        dispatch(fetchDataWithStates(user.uid)).unwrap()
+            .then(() => showToast({ description: 'Data Fetched!', status: 'success' }))
+            .catch(() => showToast({ description: 'Error fetching Calc Data', status: 'error' }));
+    };
+    
+
     return (
         <Container minW='100%'>
+
+            <Heading>Welcome Back!</Heading>
+
+
             <Text>Calculator</Text>
             <NewWeekButton />
-            <Button onClick={() => setFetchTrigger(ft => !ft)}>Fetch Data</Button>
+            <Button onClick={handleFetchData}>Fetch Data</Button>
             <Grid templateColumns="repeat(8, 1fr)" gap={4} mt={4}>
                 {getWeekData().reverse().map((week, rowIndex) => (
                     <WeekRow key={rowIndex} week={week} rowIndex={rowIndex} startDate={calculator.startDate} />

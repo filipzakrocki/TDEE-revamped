@@ -3,17 +3,17 @@ import { useSelector } from 'react-redux';
 import { config } from './config';
 
 // Views
-import Auth from './views/Auth';
-import Calculator from './views/Calculator';
-import Analysis from './views/Analysis';
-import Faq from './views/Faq';
-import Setup from './views/Setup';
-import Logout from './views/Logout';
+import Auth from './views/auth/Auth';
+import Calculator from './views/calculator/Calculator';
+import Analysis from './views/analysis/Analysis';
+import Faq from './views/faq/Faq';
+import Setup from './views/setup/Setup';
+import Logout from './views/logout/Logout';
 
 // Components
 import { Box, Flex } from '@chakra-ui/react';
-import Sidenav from './components/Sidenav'
-import MainFrame from './components/MainFrame';
+import Sidenav from './components/layout/Sidenav'
+import MainFrame from './components/layout/MainFrame';
 
 
 const PrivateRoute = ({ view, menu }: { view: JSX.Element, menu?: JSX.Element }): JSX.Element => {

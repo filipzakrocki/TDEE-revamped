@@ -4,7 +4,7 @@ import IconMenu from './IconMenu';
 import Logo from './Logo'
 import {  useNavigate } from "react-router-dom";
 
-import { config } from '../config';
+import { config } from '../../config';
 
 const Sidenav: React.FC = () => {
     const navigate = useNavigate();

@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 // useDispatch and useSelector are used to interact with the Redux store
 import { useSelector, useDispatch } from 'react-redux';
 // AppDispatch and RootState are used to type the useDispatch and useSelector hooks
-import { AppDispatch, RootState } from '../app/store';
+import { AppDispatch, RootState } from '../../app/store';
 import { User } from 'firebase/auth';
-import { signIn, register } from '../stores/auth/authSlice';
-import { InterfaceState } from "../stores/interface/interfaceSlice";
+import { signIn, register } from '../../stores/auth/authSlice';
+import { InterfaceState } from "../../stores/interface/interfaceSlice";
 import { Input, Button, Box, FormControl, FormLabel, Image } from '@chakra-ui/react';
-import { useCustomToast } from '../utils/useCustomToast';
-import { config } from '../config';
+import { useCustomToast } from '../../utils/useCustomToast';
+import { config } from '../../config';
 
 
 function Auth() {
@@ -55,7 +55,7 @@ function Auth() {
     return (
         <Box display="flex" justifyContent="center" alignItems="center" flexDirection='column' height="100vh" className='animated-bg'>
             <Box width='400px' background={'white'} p={4}>
-                <Image src={require('../assets/tdeefitteal.png')} mb={10}/>
+                <Image src={require('../../assets/tdeefitteal.png')} mb={10}/>
             </Box>
             <Box width="400px" background={'white'} p={4}>
                 <FormControl>

@@ -1,9 +1,9 @@
 import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
-import { RootState } from '../app/store';
+import { RootState } from '../../app/store';
 
 import { useSelector } from 'react-redux';
-import { InterfaceState } from "../stores/interface/interfaceSlice";
+import { InterfaceState } from "../../stores/interface/interfaceSlice";
 
 const Footer: React.FC = () => {
     const [currentDateTime, setCurrentDateTime] = useState(new Date().toLocaleString());

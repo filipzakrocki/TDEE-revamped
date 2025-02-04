@@ -38,8 +38,8 @@ export const config: Config = {
     startingPoint: '/calculator',
 
     // colors
-    backgroundColor: '#fbf9f7',
-    backgroundNav: '#f3ebe4',
+    backgroundColor: '#fbf9f7',                 // off-white
+    backgroundNav: '#f3ebe4',                   // light beige
     backgroundLeft: "transparent",
     backgroundRight: "transparent",
 
