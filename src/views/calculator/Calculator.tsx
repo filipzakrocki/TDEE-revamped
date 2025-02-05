@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../../app/store';
 import { User } from 'firebase/auth';
 
-import { Button, Text, Container, Grid, Heading } from '@chakra-ui/react';
+import { Button, Container, Grid, Heading } from '@chakra-ui/react';
 
 import WeekRow from '../../components/WeekRow';
 import NewWeekButton from '../../components/NewWeekButton';
@@ -59,10 +59,9 @@ const Calculator: React.FC = () => {
     return (
         <Container minW='100%'>
 
-            <Heading>Welcome Back!</Heading>
+            <Heading size={'xl'} mt={1} mb={5} >Welcome Back!</Heading>
+            <Heading size={'md'} my={5} >This is week 4 of your diet! You have lost 12kg so far!</Heading>
 
-
-            <Text>Calculator</Text>
             <NewWeekButton />
             <Button onClick={handleFetchData}>Fetch Data</Button>
             <Grid templateColumns="repeat(8, 1fr)" gap={4} mt={4}>

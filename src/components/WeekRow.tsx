@@ -3,6 +3,7 @@ import { Box, GridItem, SimpleGrid, Text } from '@chakra-ui/react';
 import useCalcDate from '../utils/useCalcDate'; // Import the useCalcDate hook
 import { constants } from '../utils/constants';
 import DayCell from './DayCell'; // Import the new DayCell component
+import { format } from 'date-fns';
 
 interface WeekRowProps {
     week: any;
@@ -27,7 +28,7 @@ const WeekRow: React.FC<WeekRowProps> = ({ week, rowIndex, startDate }) => {
                     transition="all 0.2s"
                 >
                     <Text mb={2}>Week {week.week}</Text>
-                    <Text>{weekStartDate.format(constants.dateFormat)}</Text>
+                    <Text>{format(weekStartDate, constants.dateFormat)}</Text>
                 </Box>
             </GridItem>
             <GridItem colSpan={7}>

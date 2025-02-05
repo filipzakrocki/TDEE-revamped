@@ -4,7 +4,7 @@ interface Constants {
 }
 
 export const constants: Constants = {
-    dateFormat: 'DD MMM YYYY',
+    dateFormat: 'dd MMM yyyy',
     dayOfWeekFormat: 'dddd',
 }
 

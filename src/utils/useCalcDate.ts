@@ -1,9 +1,9 @@
-import { useMemo } from 'react';
-import moment from 'moment';
+import { useMemo } from "react";
+import { addWeeks, addDays, parseISO } from "date-fns";
 
 const useExtrapolatedDate = (startDate: string, weekNumber: number, dayIndex: number) => {
     const extrapolatedDate = useMemo(() => {
-        return moment(startDate).add(weekNumber - 1, 'weeks').add(dayIndex, 'days');
+        return addDays(addWeeks(parseISO(startDate), weekNumber - 1), dayIndex);
     }, [startDate, weekNumber, dayIndex]);
 
     return extrapolatedDate;

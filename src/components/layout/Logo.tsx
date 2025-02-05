@@ -7,8 +7,8 @@ const Logo: React.FC = () => {
     return (
         <Box  display='flex' flexDirection={'column'} justifyContent={'center'} alignItems={'center'}>
             <Utensils size={35} color={config.black}/>
-            <Text mt={2} fontFamily={'mono'} fontSize={15} fontWeight={600} color={config.black}>tdee</Text>
-            <Text fontFamily={'mono'} fontSize={15} fontWeight={600} color={config.black}>fit</Text>
+            <Text mt={2} letterSpacing={1} fontSize={15} fontWeight={600} color={config.black}>tdee</Text>
+            <Text letterSpacing={1} fontSize={15} fontWeight={600} color={config.black}>fit</Text>
         </Box>
     );
 };

@@ -16,6 +16,9 @@ interface Config {
     
     headerHeight: number;
     padding: number;
+    headingMargin: number;
+
+    subheaderMargin: number;
     footerHeight: number;
     sidenavWidth: string;
     leftPanelWidth: number;
@@ -51,6 +54,9 @@ export const config: Config = {
 
     // spacing
     padding: 4,
+    headingMargin: 20,
+    subheaderMargin: 5,
+
     headerHeight: 0,
     footerHeight: 60,
     sidenavWidth: '100px',
