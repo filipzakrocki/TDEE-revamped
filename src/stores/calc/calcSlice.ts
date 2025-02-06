@@ -62,7 +62,7 @@ const initialState: CalcState = {
 // Async actions
 export const fetchDataWithStates = createAsyncThunk(
     'calc/fetchData',
-    async (uid: string, {dispatch, rejectWithValue}) => {
+    async (uid: string, { dispatch, rejectWithValue}) => {
         dispatch(fetchDataStart());
     try {
         const dataRef = ref(database, `states/${uid}`);

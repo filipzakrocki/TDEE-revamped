@@ -5,6 +5,6 @@ interface Constants {
 
 export const constants: Constants = {
     dateFormat: 'dd MMM yyyy',
-    dayOfWeekFormat: 'dddd',
+    dayOfWeekFormat: 'EEE',
 }
 

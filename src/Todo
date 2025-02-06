@@ -3,10 +3,19 @@
 [ ] FIX THE LAYOUT AND MENU -> BUILD PRETTY -> CONNECT IT
     focus on the layout and something you'd be happy to come back too first, use placeholders and charts and stuff
 
+DESIGN FIRST >>>>>>>>> IMPLEMENT
+
+Calculator:
+- Welcome back message
+- day of the diet
+- progress so far
+- current tdee
+- recap fo the current week and last week
+- 7 days at the bottom where you can enter the data, current date being highlighted, past date being highlighted on the basis on how far kcal are from the consumption goal (tdee + adjustment for goal)
 
 
-[ ] Correct icon menu
-[ ] Fix mess with Week/Day Component dates
+
+
 [ ] Heatmap for the days in 2 modes - kg/kcal in analysis
 [ ] wrapper for weight, something that will toggle between kg and lbs
 [ ] Maybe reduce main screen to just one week, and some colorization/sizing depending on if the goal was hit?
@@ -16,6 +25,8 @@
 
 # TODO Done
 
+[x] Fix mess with Week/Day Component dates
+[x] Correct icon menu
 [X] creating custom hook for date inside the calculator
 [X] creating constants file
 [x] New Week button

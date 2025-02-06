@@ -11,7 +11,7 @@ const MainFrame: React.FC<MainFrameProps> = ({ children, bg }) => {
     const height = config.mainFrameHeight;
 
     return (
-        <Box bg={bg || config.backgroundNav} height={height} sx={{ overflowY: 'auto' }} borderRadius={config.borderRadius} p={config.padding}>
+        <Box bg={bg || config.backgroundNav} height={height} sx={{ overflowY: 'hidden' }} p={config.padding}>
             {children}
         </Box>
     );

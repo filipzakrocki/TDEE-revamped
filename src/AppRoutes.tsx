@@ -29,14 +29,14 @@ const PrivateRoute = ({ view, menu }: { view: JSX.Element, menu?: JSX.Element })
             </MainFrame>
           </Box>
           {/* View area */}
-          <Box flex={config.leftPanelWidth} p={config.padding} bg={config.backgroundLeft} color={config.black} overflow={'auto'}>
+          <Box flex={config.leftPanelWidth} p={config.padding}  color={config.black} >
             <MainFrame>
               {view}
             </MainFrame>
           </Box>
           {/* Menu area */}
-          {menu && <Box flex={config.rightPanelWidth} minW={config.minRightPanelWidth} p={config.padding} bg={config.backgroundRight} color={config.black} overflow={'auto'}>
-            <MainFrame bg={config.backgroundRight}>
+          {menu && <Box flex={config.rightPanelWidth} minW={config.minRightPanelWidth} p={config.padding}  color={config.black}>
+            <MainFrame >
               {menu}
             </MainFrame>
           </Box>}

@@ -1,4 +1,5 @@
 import { extendTheme } from '@chakra-ui/react';
+import { config } from './config';
 
 import '@fontsource/raleway/400.css';
 import '@fontsource/raleway/700.css';
@@ -6,9 +7,16 @@ import '@fontsource/lato/400.css';
 import '@fontsource/lato/700.css';
 
 const theme = extendTheme({
+  styles: {
+    global: {
+      'div': {
+        borderRadius: config.borderRadius
+      }
+    }
+  },
   fonts: {
-    heading: `'Raleway', sans-serif`,
-    body: `'Lato', sans-serif`,
+    heading: config.headingFont,
+    body: config.bodyFont,
   },
   components: {
     Heading: {
