@@ -6,19 +6,18 @@ import { useSelector, useDispatch } from 'react-redux';
 import { AppDispatch, RootState } from '../../app/store';
 import { User } from 'firebase/auth';
 
-import { Button, Container, Grid, Heading, Stat, Card,   StatLabel,
-    StatNumber,
-    StatHelpText, } from '@chakra-ui/react';
+import { Button, Container, Grid, Heading, Spinner } from '@chakra-ui/react';
 
 import WeekRow from '../../components/WeekRow';
 import NewWeekButton from '../../components/NewWeekButton';
 
-import { config } from '../../config';
 import TDEECard from './components/TDEECard';
+import WeekSummary from './components/WeekSummary';
 
 const Calculator: React.FC = () => {
     const user: User | null = useSelector((state: RootState) => state.auth.user);
     const calculator: CalcState | null  = useSelector((state: RootState) => state.calc);
+    const { loading } = useSelector((state: RootState) => state.interface);
 
     const dispatch = useDispatch<AppDispatch>();
     const showToast = useCustomToast();
@@ -42,16 +41,12 @@ const Calculator: React.FC = () => {
         fetchCalcData();
 
         // eslint-disable-next-line
-    }, []);
-
-    // Silencing strict mode warning
+    }, [dispatch, user?.uid]);
 
     const getWeekData = () => {
         const weekData = calculator.weekData;
         return weekData.filter(w => w.week);
     };
-
-    console.log(getWeekData());
 
     const handleFetchData = () => {
         if (!user?.uid) return;
@@ -59,30 +54,27 @@ const Calculator: React.FC = () => {
             .then(() => showToast({ description: 'Data Fetched!', status: 'success' }))
             .catch(() => showToast({ description: 'Error fetching Calc Data', status: 'error' }));
     };
-    
 
     return (
         <Container minW='100%'>
-
             <Heading size={'xl'} mt={1} mb={5} >Welcome Back!</Heading>
             <Heading size={'md'} my={5} >This is week 4 of your diet! You have lost 12kg so far!</Heading>
-            <Card bg={config.test2} my={5} p={config.padding} display={'block'} width={'300px'}>
-                <Stat>
-                    <StatLabel>Total Daily Energy Expenditure</StatLabel>
-                    <StatNumber fontSize={'5xl'}>2352</StatNumber>
-                    <StatHelpText>Week of 26 Aug 2025</StatHelpText>
-                </Stat>
-            </Card>
-            <TDEECard bg={config.test2} padding={5} date='yesterday' totalEnergyExpenditure={2300} />
+
+            <TDEECard date='yesterday' totalEnergyExpenditure={2300} />
+            <WeekSummary />
+
             <NewWeekButton />
             <Button onClick={handleFetchData}>Fetch Data</Button>
 
-
-            <Grid templateColumns="repeat(8, 1fr)" gap={4} mt={4}>
-                {getWeekData().reverse().map((week, rowIndex) => (
-                    <WeekRow key={rowIndex} week={week} rowIndex={rowIndex} startDate={calculator.startDate} />
-                ))}
-            </Grid>
+            {loading ? (
+                <Spinner size="xl" />
+            ) : (
+                <Grid templateColumns="repeat(8, 1fr)" gap={4} mt={4}>
+                    {getWeekData().reverse().map((week, rowIndex) => (
+                        <WeekRow key={rowIndex} week={week} rowIndex={rowIndex} startDate={calculator.startDate} />
+                    ))}
+                </Grid>
+            )}
         </Container>
     );
 };
