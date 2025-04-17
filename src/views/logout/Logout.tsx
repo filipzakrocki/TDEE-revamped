@@ -1,20 +1,16 @@
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useAuthStore } from '../../stores/auth/authStore';
 import { useNavigate } from 'react-router-dom';
-import { signOut } from '../../stores/auth/authSlice';
-
-import { AppDispatch } from '../../app/store';
 
 const Logout = () => {
-const dispatch = useDispatch<AppDispatch>();
-const navigate = useNavigate();
+    const signOut = useAuthStore(state => state.signOut);
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    dispatch(signOut())
-    .then(() => navigate('/'));
-  }, [dispatch, navigate]);
+    useEffect(() => {
+        signOut().then(() => navigate('/'));
+    }, [signOut, navigate]);
 
-  return null;
+    return null;
 };
 
 export default Logout;

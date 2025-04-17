@@ -2,9 +2,7 @@ import React from 'react';
 import { Box, Text, Input } from '@chakra-ui/react';
 import { constants } from '../utils/constants';
 import useCalcDate from '../utils/useCalcDate';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../app/store';
-import { updateDay } from '../stores/calc/calcSlice';
+import { useCalcStore } from '../stores/calc/calcStore';
 import { format } from 'date-fns';
 
 interface DayCellProps {
@@ -16,13 +14,13 @@ interface DayCellProps {
 }
 
 const DayCell: React.FC<DayCellProps> = ({ day, dayIndex, rowIndex, weekNumber, startDate }) => {
-    const dispatch = useDispatch<AppDispatch>();
+    const updateDay = useCalcStore(state => state.updateDay);
 
     const dayDate = useCalcDate(startDate, weekNumber, dayIndex);
 
     const handleChange = (dayIndex: number, weekNumber: number, type: 'kg' | 'kcal', e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        dispatch(updateDay({ type, dayIndex, weekNumber, value }));
+        updateDay({ type, dayIndex, weekNumber, value: value as number | '' });
     };
 
 

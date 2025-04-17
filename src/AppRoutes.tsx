@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useAuthStore } from './stores/auth/authStore';
 import { config } from './config';
 
 // Views
@@ -17,7 +17,7 @@ import MainFrame from './components/layout/MainFrame';
 
 
 const PrivateRoute = ({ view, menu }: { view: JSX.Element, menu?: JSX.Element }): JSX.Element => {
-  const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/" />;
 
   return (

@@ -1,25 +1,18 @@
 import { useCallback } from 'react';
-import { useDispatch } from 'react-redux';
-import { fetchDataWithStates } from '../stores/calc/calcSlice';
-import { AppDispatch } from '../app/store';
-import { useCustomToast } from '../utils/useCustomToast';
+import { useCalcStore } from '../stores/calc/calcStore';
 
 const useFetchCalcData = (uid: string | undefined) => {
-    const dispatch = useDispatch<AppDispatch>();
-    const showToast = useCustomToast();
+    const fetchData = useCalcStore(state => state.fetchData);
 
     const handleFetchData = useCallback(async () => {
+        console.log('Fetching data...');
         if (!uid) return;
         try {
-            const data = await dispatch(fetchDataWithStates(uid)).unwrap();
-            if (data) {
-                showToast({ description: 'Data Fetched!', status: 'success' });
-            }
+            await fetchData(uid);
         } catch (error) {
             console.error("Error fetching Calc Data: ", error);
-            showToast({ description: 'Error fetching Calc Data', status: 'error' });
         }
-    }, [ uid, dispatch, showToast ]);
+    }, [uid, fetchData]);
 
     return { handleFetchData };
 };

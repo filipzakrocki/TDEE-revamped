@@ -1,9 +1,4 @@
-import React, { useEffect } from 'react';
-
-import { CalcState } from '../../stores/calc/calcSlice';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../app/store';
-import { User } from 'firebase/auth';
+import React, { useEffect, useCallback } from 'react';
 
 import { Button, Container, Grid, Heading, Spinner } from '@chakra-ui/react';
 
@@ -13,21 +8,28 @@ import NewWeekButton from '../../components/NewWeekButton';
 import TDEECard from './components/TDEECard';
 import WeekSummary from './components/WeekSummary';
 
-import useFetchCalcData from '../../hooks/useFetchCalcData'
+import { useAuthStore } from '../../stores/auth/authStore';
+import { useCalcStore } from '../../stores/calc/calcStore';
+import { useInterfaceStore } from '../../stores/interface/interfaceStore';
 
 const Calculator: React.FC = () => {
-    const user: User | null = useSelector((state: RootState) => state.auth.user);
-    const calculator: CalcState | null  = useSelector((state: RootState) => state.calc);
-    const { loading } = useSelector((state: RootState) => state.interface);
+    const user = useAuthStore(state => state.user);
+    const fetchData = useCalcStore(state => state.fetchData);
+    const weekData = useCalcStore(state => state.weekData);
+    const startDate = useCalcStore(state => state.startDate);
 
-    const { handleFetchData } = useFetchCalcData(user?.uid)
+    const loading = useInterfaceStore(state => state.loading);
+
+    const handleFetchData = useCallback(async () => {
+        if (!user?.uid) return;
+        fetchData(user.uid);
+    }, [user?.uid, fetchData]);
 
     useEffect(() => {
-        handleFetchData()
-    }, [handleFetchData])
+        handleFetchData();
+    }, [handleFetchData]);
 
     const getWeekData = () => {
-        const weekData = calculator.weekData;
         return weekData.filter(w => w.week);
     };
 
@@ -40,14 +42,19 @@ const Calculator: React.FC = () => {
             <WeekSummary />
 
             <NewWeekButton />
-            <Button onClick={handleFetchData}>Fetch Data</Button>
+            <Button 
+                onClick={handleFetchData} 
+                isDisabled={!user}
+            >
+                Fetch Data
+            </Button>
 
             {loading ? (
                 <Spinner size="xl" />
             ) : (
                 <Grid templateColumns="repeat(8, 1fr)" gap={4} mt={4}>
                     {getWeekData().reverse().map((week, rowIndex) => (
-                        <WeekRow key={rowIndex} week={week} rowIndex={rowIndex} startDate={calculator.startDate} />
+                        <WeekRow key={rowIndex} week={week} rowIndex={rowIndex} startDate={startDate} />
                     ))}
                 </Grid>
             )}

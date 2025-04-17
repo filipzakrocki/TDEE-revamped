@@ -1,14 +1,12 @@
 import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
-import { RootState } from '../../app/store';
 
-import { useSelector } from 'react-redux';
-import { InterfaceState } from "../../stores/interface/interfaceSlice";
+import { useInterfaceStore } from '../../stores/interface/interfaceStore';
 
 const Footer: React.FC = () => {
     const [currentDateTime, setCurrentDateTime] = useState(new Date().toLocaleString());
 
-    const { loading }: InterfaceState = useSelector((state: RootState) => state.interface);
+    const loading = useInterfaceStore(state => state.loading);
 
     useEffect(() => {
         const interval = setInterval(() => {
