@@ -101,7 +101,7 @@ const Calculator: React.FC = () => {
 
             <WeekSelector startDate={startDate} />
         </Container>
-        {syncing || loading && (
+        {(syncing || loading) && (
             <Box position="fixed" top={4} right={4} zIndex={1000}>
                 <Spinner thickness='3px' speed='0.7s' emptyColor='gray.200' color='black.100' size='xl' />
             </Box>
