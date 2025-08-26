@@ -38,3 +38,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: userCredential.user, isAuthenticated: true });
   }
 })); 
+
+export const useAuth = () => ({
+  user: useAuthStore(state => state.user),
+  isAuthenticated: useAuthStore(state => state.isAuthenticated),
+  signIn: useAuthStore(state => state.signIn),
+  signOut: useAuthStore(state => state.signOut),
+  register: useAuthStore(state => state.register),
+})

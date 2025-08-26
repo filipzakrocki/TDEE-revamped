@@ -3,17 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Input, Button, Box, FormControl, FormLabel, Image } from '@chakra-ui/react';
 import { useCustomToast } from '../../utils/useCustomToast';
 import { config } from '../../config';
-import { useAuthStore } from '../../stores/auth/authStore';
-import { useInterfaceStore } from '../../stores/interface/interfaceStore';
+import { useAuth } from '../../stores/auth/authStore';
+import { useInterface } from '../../stores/interface/interfaceStore';
 
 function Auth() {
     const navigate = useNavigate();
     const showToast = useCustomToast();
 
-    const user = useAuthStore(state => state.user);
-    const signIn = useAuthStore(state => state.signIn);
-    const register = useAuthStore(state => state.register);
-    const loading = useInterfaceStore(state => state.loading);
+    const { user, signIn, register } = useAuth();
+    const { loading } = useInterface();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

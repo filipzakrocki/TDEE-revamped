@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { useAuthStore } from '../../stores/auth/authStore';
+import { useAuth } from '../../stores/auth/authStore';
 import { useNavigate } from 'react-router-dom';
 
 const Logout = () => {
-    const signOut = useAuthStore(state => state.signOut);
+    const { signOut } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {

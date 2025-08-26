@@ -1,24 +1,23 @@
 import React, { useEffect, useCallback } from 'react';
 
-import { Button, Container, Grid, Heading, Spinner } from '@chakra-ui/react';
+import { Button, Container, Heading, Spinner, Flex, Box } from '@chakra-ui/react';
 
-import WeekRow from '../../components/WeekRow';
 import NewWeekButton from '../../components/NewWeekButton';
 
 import TDEECard from './components/TDEECard';
 import WeekSummary from './components/WeekSummary';
+import WeekSelector from './components/WeekSelector';
 
-import { useAuthStore } from '../../stores/auth/authStore';
-import { useCalcStore } from '../../stores/calc/calcStore';
-import { useInterfaceStore } from '../../stores/interface/interfaceStore';
+import { useAuth } from '../../stores/auth/authStore';
+import { useCalc } from '../../stores/calc/calcStore';
+import { useInterface } from '../../stores/interface/interfaceStore';
+import { database } from '../../firebase/firebase';
+import { ref, remove } from 'firebase/database';
 
 const Calculator: React.FC = () => {
-    const user = useAuthStore(state => state.user);
-    const fetchData = useCalcStore(state => state.fetchData);
-    const weekData = useCalcStore(state => state.weekData);
-    const startDate = useCalcStore(state => state.startDate);
-
-    const loading = useInterfaceStore(state => state.loading);
+    const { user } = useAuth();
+    const { fetchData, weekData, startDate, selectWeek, selectedWeek } = useCalc();
+    const { loading, syncing } = useInterface();
 
     const handleFetchData = useCallback(async () => {
         if (!user?.uid) return;
@@ -29,36 +28,85 @@ const Calculator: React.FC = () => {
         handleFetchData();
     }, [handleFetchData]);
 
-    const getWeekData = () => {
-        return weekData.filter(w => w.week);
-    };
+    console.log(syncing);
+
+    useEffect(() => {
+        const displayWeeks = weekData.filter(w => w.week >= 1);
+        if (displayWeeks.length > 0) {
+            const latestWeek = Math.max(...displayWeeks.map(w => w.week));
+            if (selectedWeek < 1) {
+                selectWeek(latestWeek);
+            }
+        }
+    }, [weekData, selectedWeek, selectWeek]);
+
+
+    const handleNukeData = useCallback(async () => {
+        // Clear legacy/local keys
+        try {
+            localStorage.removeItem('localState');
+            localStorage.removeItem('localStateTimestamp');
+            localStorage.removeItem('state');
+            localStorage.removeItem('serverStateTimestamp');
+            // Also clear our current per-user key if present
+            const uidKey = user?.uid ? `tdee-calc-data-${user.uid}` : 'tdee-calc-data';
+            localStorage.removeItem(uidKey);
+        } catch {}
+
+        if (user?.uid) {
+            try {
+                await Promise.all([
+                    remove(ref(database, `states/${user.uid}`)),
+                    remove(ref(database, `manualStates/${user.uid}`))
+                ]);
+                window.location.reload();
+            } catch (err) {
+                console.error('Failed to nuke remote data', err);
+            }
+        } else {
+            window.location.reload();
+        }
+    }, [user?.uid]);
 
     return (
+        <>
         <Container minW='100%'>
-            <Heading size={'xl'} mt={1} mb={5} >Welcome Back!</Heading>
-            <Heading size={'md'} my={5} >This is week 4 of your diet! You have lost 12kg so far!</Heading>
+            <Heading size={'md'} mt={1} mb={3} fontWeight="bold">Welcome Back!</Heading>
+            <Heading size={'sm'} my={3} >This is week 4 of your diet! You have lost 12kg so far!</Heading>
 
-            <TDEECard date='yesterday' totalEnergyExpenditure={2300} />
+            <Flex wrap="wrap" gap={4} mb={5} justify="space-between">
+                <TDEECard date='yesterday' totalEnergyExpenditure={2300} flex="1" />
+                <TDEECard date='today' totalEnergyExpenditure={2400} flex="1" />
+                <TDEECard date='tomorrow' totalEnergyExpenditure={2350} flex="1" />
+                <TDEECard date='last week' totalEnergyExpenditure={2280} flex="1" />
+            </Flex>
             <WeekSummary />
 
             <NewWeekButton />
-            <Button 
-                onClick={handleFetchData} 
-                isDisabled={!user}
-            >
-                Fetch Data
-            </Button>
+            <Flex gap={2} mt={2}>
+                <Button 
+                    onClick={handleFetchData} 
+                    isDisabled={!user}
+                >
+                    Fetch Data
+                </Button>
+                <Button 
+                    colorScheme='red'
+                    variant='outline'
+                    onClick={handleNukeData}
+                >
+                    Nuke Data
+                </Button>
+            </Flex>
 
-            {loading ? (
-                <Spinner size="xl" />
-            ) : (
-                <Grid templateColumns="repeat(8, 1fr)" gap={4} mt={4}>
-                    {getWeekData().reverse().map((week, rowIndex) => (
-                        <WeekRow key={rowIndex} week={week} rowIndex={rowIndex} startDate={startDate} />
-                    ))}
-                </Grid>
-            )}
+            <WeekSelector startDate={startDate} />
         </Container>
+        {syncing || loading && (
+            <Box position="fixed" top={4} right={4} zIndex={1000}>
+                <Spinner thickness='3px' speed='0.7s' emptyColor='gray.200' color='black.100' size='xl' />
+            </Box>
+        )}
+        </>
     );
 };
 

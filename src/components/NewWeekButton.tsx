@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCalcStore } from '../stores/calc/calcStore';
+import { useCalc } from '../stores/calc/calcStore';
 import { useDisclosure } from '@chakra-ui/react';
 import {
     Button,
@@ -14,7 +14,7 @@ import {
 const NewWeekButton: React.FC = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const cancelRef = React.useRef<HTMLButtonElement>(null);
-    const addNewWeek = useCalcStore(state => state.addNewWeek);
+    const { addNewWeek } = useCalc();
 
     const handleNewWeek = () => {
         addNewWeek();

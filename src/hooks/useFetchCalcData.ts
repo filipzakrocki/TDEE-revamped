@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
-import { useCalcStore } from '../stores/calc/calcStore';
+import { useCalc } from '../stores/calc/calcStore';
 
 const useFetchCalcData = (uid: string | undefined) => {
-    const fetchData = useCalcStore(state => state.fetchData);
+    const { fetchData } = useCalc();
 
     const handleFetchData = useCallback(async () => {
         console.log('Fetching data...');

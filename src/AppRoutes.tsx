@@ -1,23 +1,22 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './stores/auth/authStore';
+import { lazy, Suspense } from 'react';
+import { Box, Flex, Spinner, Center } from '@chakra-ui/react';
+import { useAuth } from './stores/auth/authStore';
 import { config } from './config';
-
-// Views
-import Auth from './views/auth/Auth';
-import Calculator from './views/calculator/Calculator';
-import Analysis from './views/analysis/Analysis';
-import Faq from './views/faq/Faq';
-import Setup from './views/setup/Setup';
-import Logout from './views/logout/Logout';
-
-// Components
-import { Box, Flex } from '@chakra-ui/react';
 import Sidenav from './components/layout/Sidenav'
 import MainFrame from './components/layout/MainFrame';
 
+// Lazy load views for code splitting
+const Auth = lazy(() => import('./views/auth/Auth'));
+const Calculator = lazy(() => import('./views/calculator/Calculator'));
+const Analysis = lazy(() => import('./views/analysis/Analysis'));
+const Faq = lazy(() => import('./views/faq/Faq'));
+const Setup = lazy(() => import('./views/setup/Setup'));
+const Logout = lazy(() => import('./views/logout/Logout'));
+
 
 const PrivateRoute = ({ view, menu }: { view: JSX.Element, menu?: JSX.Element }): JSX.Element => {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const { isAuthenticated } = useAuth();
   if (!isAuthenticated) return <Navigate to="/" />;
 
   return (
@@ -44,16 +43,24 @@ const PrivateRoute = ({ view, menu }: { view: JSX.Element, menu?: JSX.Element })
   );
 };
 
+const LoadingSpinner = () => (
+  <Center h="100vh">
+    <Spinner size="xl" color={config.test5} thickness="4px" />
+  </Center>
+);
+
 const AppRoutes = (): JSX.Element => {
   return (
-    <Routes>
-      <Route path="/" element={<Auth />} />
-      <Route path="/calculator" element={<PrivateRoute view={<Calculator />} menu={<p>.</p>} />} />
-      <Route path="/setup" element={<PrivateRoute view={<Setup />} menu={<p>.</p>} />} />
-      <Route path="/analysis" element={<PrivateRoute view={<Analysis/>} />} />
-      <Route path="/faq" element={<PrivateRoute view={<Faq/>} />} />
-      <Route path="/logout" element={<PrivateRoute view={<Logout/>} />} />
-    </Routes>
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        <Route path="/" element={<Auth />} />
+        <Route path="/calculator" element={<PrivateRoute view={<Calculator />} menu={<p>.</p>} />} />
+        <Route path="/setup" element={<PrivateRoute view={<Setup />} menu={<p>.</p>} />} />
+        <Route path="/analysis" element={<PrivateRoute view={<Analysis/>} />} />
+        <Route path="/faq" element={<PrivateRoute view={<Faq/>} />} />
+        <Route path="/logout" element={<PrivateRoute view={<Logout/>} />} />
+      </Routes>
+    </Suspense>
   );
 };
 
