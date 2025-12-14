@@ -40,6 +40,7 @@ interface Config {
 interface MenuItem {
     icon: React.ElementType;
     route: string;
+    label: string;
     divider?: boolean;
 }
 
@@ -84,10 +85,10 @@ export const config: Config = {
 
     // menu items
     menuItems: [
-        { icon: Calendar, route: "/calculator" },
-        { icon: BarChart3, route: "/analysis" },
-        { icon: HelpCircle, route: "/faq", divider: true },
-        { icon: Settings, route: "/setup" },
-        { icon: LogOut, route: "/logout" },
+        { icon: Calendar, route: "/calculator", label: "Calculator" },
+        { icon: BarChart3, route: "/analysis", label: "Analytics" },
+        { icon: HelpCircle, route: "/faq", label: "FAQ", divider: true },
+        { icon: Settings, route: "/setup", label: "Setup" },
+        { icon: LogOut, route: "/logout", label: "Logout" },
       ]
 };

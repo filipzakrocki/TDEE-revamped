@@ -4,6 +4,15 @@ import { ref, get, set } from 'firebase/database';
 import { useInterfaceStore } from '../interface/interfaceStore';
 import { useAuthStore } from '../auth/authStore';
 import { showSuccessToast, showErrorToast } from '../../utils/toast';
+import {
+    estimateInitialTDEE,
+    dailyKcalToWeeklyChange,
+    kgToLbs,
+    lbsToKg,
+    getTodayFormatted,
+    KCAL_PER_KG,
+    KCAL_PER_LB,
+} from '../../utils/calculations';
 
 // Sync utilities
 const FALLBACK_STORAGE_KEY = 'tdee-calc-data';
@@ -139,12 +148,27 @@ interface CalcPayload {
 interface CalcState extends CalcPayload {
     fetched: boolean;
     selectedWeek: number;
+    
+    // Data operations
     fetchData: (uid: string) => Promise<void>;
     loadFromStorage: () => void;
+    
+    // Week operations
     addNewWeek: () => void;
     updateDay: (payload: { dayIndex: number; weekNumber: number; type: 'kg' | 'kcal'; value: number | '' }) => void;
     selectWeek: (weekNumber: number) => void;
     toggleWeekLock: (weekNumber: number) => void;
+    
+    // Setup operations (from old project)
+    setStartDate: (date: string) => void;
+    setStartWeight: (weight: number) => void;
+    setGoalWeight: (weight: number) => void;
+    setWeeklyChange: (change: number) => void;
+    setDailyKcalChange: (kcal: number) => void;
+    setWeeksForAvg: (weeks: number) => void;
+    toggleMeasurementSystem: () => void;
+    toggleCompactView: () => void;
+    lockInitialInputs: () => void;
 }
 
 export const useCalcStore = create<CalcState>((set) => ({
@@ -280,10 +304,124 @@ export const useCalcStore = create<CalcState>((set) => ({
         debouncedSync(newState);
         showSuccessToast('Week lock status updated');
         return newState;
-    })
+    }),
+
+    // ========================================
+    // Setup Operations (ported from old project)
+    // ========================================
+
+    setStartDate: (date: string) => set((state) => {
+        const startDate = date || getTodayFormatted();
+        const newState = { ...state, startDate };
+        debouncedSync(newState);
+        return newState;
+    }),
+
+    setStartWeight: (weight: number) => set((state) => {
+        const startWeight = Number(weight);
+        const startingTdee = estimateInitialTDEE(startWeight, state.isMetricSystem);
+        const isWeightLoss = state.goalWeight > 0 ? startWeight > state.goalWeight : null;
+        
+        // Update week 0 with initial values
+        const newWeekData = [...state.weekData];
+        newWeekData[0] = {
+            ...newWeekData[0],
+            avgKcal: startingTdee,
+            avgWeight: startWeight,
+        };
+
+        const newState = {
+            ...state,
+            startWeight,
+            isWeightLoss,
+            avgWeightOverTime: [startWeight],
+            avgTdeeOverTime: [startingTdee],
+            tdee: startingTdee,
+            weekData: newWeekData,
+        };
+        debouncedSync(newState);
+        return newState;
+    }),
+
+    setGoalWeight: (weight: number) => set((state) => {
+        const goalWeight = Number(weight);
+        const isWeightLoss = state.startWeight > 0 ? state.startWeight > goalWeight : null;
+        
+        const newState = { ...state, goalWeight, isWeightLoss };
+        debouncedSync(newState);
+        return newState;
+    }),
+
+    setWeeklyChange: (change: number) => set((state) => {
+        const weeklyChange = Number(change);
+        const kcalModifier = state.isMetricSystem ? KCAL_PER_KG : KCAL_PER_LB;
+        const dailyKcalChange = Math.ceil(weeklyChange * kcalModifier);
+        
+        const newState = { ...state, weeklyChange, dailyKcalChange };
+        debouncedSync(newState);
+        return newState;
+    }),
+
+    setDailyKcalChange: (kcal: number) => set((state) => {
+        const dailyKcalChange = parseInt(String(kcal), 10);
+        const weeklyChange = dailyKcalToWeeklyChange(dailyKcalChange, state.isMetricSystem);
+        
+        const newState = { ...state, dailyKcalChange, weeklyChange };
+        debouncedSync(newState);
+        return newState;
+    }),
+
+    setWeeksForAvg: (weeks: number) => set((state) => {
+        // Clamp between 1 and reasonable max
+        const weeksForAvg = Math.max(1, Math.floor(weeks));
+        
+        const newState = { ...state, weeksForAvg };
+        debouncedSync(newState);
+        return newState;
+    }),
+
+    toggleMeasurementSystem: () => set((state) => {
+        const isMetricSystem = !state.isMetricSystem;
+        
+        // Convert all weight values
+        const convertWeight = (w: number) => isMetricSystem ? lbsToKg(w) : kgToLbs(w);
+        
+        const startWeight = Number(convertWeight(state.startWeight).toFixed(2));
+        const goalWeight = Number(convertWeight(state.goalWeight).toFixed(2));
+        const weeklyChange = Number(convertWeight(state.weeklyChange).toFixed(2));
+        
+        // Recalculate daily kcal change based on new unit
+        const kcalModifier = isMetricSystem ? KCAL_PER_KG : KCAL_PER_LB;
+        const dailyKcalChange = Math.ceil(weeklyChange * kcalModifier);
+        
+        const newState = {
+            ...state,
+            isMetricSystem,
+            startWeight,
+            goalWeight,
+            weeklyChange,
+            dailyKcalChange,
+        };
+        debouncedSync(newState);
+        showSuccessToast(`Switched to ${isMetricSystem ? 'metric (kg)' : 'imperial (lbs)'}`);
+        return newState;
+    }),
+
+    toggleCompactView: () => set((state) => {
+        const newState = { ...state, isCompactView: !state.isCompactView };
+        debouncedSync(newState);
+        return newState;
+    }),
+
+    lockInitialInputs: () => set((state) => {
+        const newState = { ...state, initialInputsLocked: true };
+        debouncedSync(newState);
+        return newState;
+    }),
 }));
 
 export const useCalc = () => ({
+    // State values
     fetched: useCalcStore(state => state.fetched),
     startDate: useCalcStore(state => state.startDate),
     startWeight: useCalcStore(state => state.startWeight),
@@ -304,10 +442,24 @@ export const useCalc = () => ({
     weekData: useCalcStore(state => state.weekData),
     selectedWeek: useCalcStore(state => state.selectedWeek),
 
+    // Data operations
     fetchData: useCalcStore(state => state.fetchData),
     loadFromStorage: useCalcStore(state => state.loadFromStorage),
+    
+    // Week operations
     addNewWeek: useCalcStore(state => state.addNewWeek),
     updateDay: useCalcStore(state => state.updateDay),
     selectWeek: useCalcStore(state => state.selectWeek),
     toggleWeekLock: useCalcStore(state => state.toggleWeekLock),
+    
+    // Setup operations
+    setStartDate: useCalcStore(state => state.setStartDate),
+    setStartWeight: useCalcStore(state => state.setStartWeight),
+    setGoalWeight: useCalcStore(state => state.setGoalWeight),
+    setWeeklyChange: useCalcStore(state => state.setWeeklyChange),
+    setDailyKcalChange: useCalcStore(state => state.setDailyKcalChange),
+    setWeeksForAvg: useCalcStore(state => state.setWeeksForAvg),
+    toggleMeasurementSystem: useCalcStore(state => state.toggleMeasurementSystem),
+    toggleCompactView: useCalcStore(state => state.toggleCompactView),
+    lockInitialInputs: useCalcStore(state => state.lockInitialInputs),
 })

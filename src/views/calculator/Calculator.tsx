@@ -1,35 +1,78 @@
 import React, { useEffect, useCallback } from 'react';
+import {
+    Container,
+    Heading,
+    Text,
+    Spinner,
+    Box,
+    SimpleGrid,
+    Card,
+    CardBody,
+    Stat,
+    StatLabel,
+    StatNumber,
+    StatHelpText,
+    HStack,
+    VStack,
+    Flex,
+    Badge,
+    Button,
+    Tooltip,
+} from '@chakra-ui/react';
+import { Plus, Flame, Target, TrendingDown, TrendingUp, Scale, Calendar, Info } from 'lucide-react';
 
-import { Button, Container, Heading, Spinner, Flex, Box } from '@chakra-ui/react';
-
-import NewWeekButton from '../../components/NewWeekButton';
-
-import TDEECard from './components/TDEECard';
-import WeekSummary from './components/WeekSummary';
-import WeekSelector from './components/WeekSelector';
+import WeekCalendar from './components/WeekCalendar';
+import DayCard from './components/DayCard';
 
 import { useAuth } from '../../stores/auth/authStore';
 import { useCalc } from '../../stores/calc/calcStore';
 import { useInterface } from '../../stores/interface/interfaceStore';
-import { database } from '../../firebase/firebase';
-import { ref, remove } from 'firebase/database';
+import { useTDEECalculations } from '../../hooks/useTDEECalculations';
+import { config } from '../../config';
 
 const Calculator: React.FC = () => {
-    const { user } = useAuth();
-    const { fetchData, weekData, startDate, selectWeek, selectedWeek } = useCalc();
+    const { user, isGuest } = useAuth();
+    const { 
+        fetchData, 
+        loadFromStorage,
+        weekData, 
+        startDate, 
+        selectedWeek,
+        selectWeek,
+        addNewWeek,
+        startWeight,
+        goalWeight,
+        isMetricSystem,
+        dailyKcalChange,
+        weeksForAvg,
+    } = useCalc();
     const { loading, syncing } = useInterface();
+    const {
+        currentTdee,
+        recommendedDailyIntake,
+        currentAvgWeight,
+        totalWeightChange,
+        weeksToGoal,
+        isWeightLoss,
+        weekCalculations,
+        tdeeOverTime,
+    } = useTDEECalculations();
 
     const handleFetchData = useCallback(async () => {
+        if (isGuest) {
+            // Guest mode: load from localStorage only
+            loadFromStorage();
+            return;
+        }
         if (!user?.uid) return;
         fetchData(user.uid);
-    }, [user?.uid, fetchData]);
+    }, [user?.uid, isGuest, fetchData, loadFromStorage]);
 
     useEffect(() => {
         handleFetchData();
     }, [handleFetchData]);
 
-    console.log(syncing);
-
+    // Auto-select the latest week
     useEffect(() => {
         const displayWeeks = weekData.filter(w => w.week >= 1);
         if (displayWeeks.length > 0) {
@@ -40,73 +83,284 @@ const Calculator: React.FC = () => {
         }
     }, [weekData, selectedWeek, selectWeek]);
 
+    const displayWeeks = weekData.filter(w => w.week >= 1);
+    const currentWeek = displayWeeks.find(w => w.week === selectedWeek);
+    const currentWeekCalc = weekCalculations.find(w => w.weekNumber === selectedWeek);
+    const weightUnit = isMetricSystem ? 'kg' : 'lbs';
+    const weekNumber = displayWeeks.length;
+    
+    // Check if user needs to set up first
+    const needsSetup = !startDate || startWeight === 0 || goalWeight === 0;
 
-    const handleNukeData = useCallback(async () => {
-        // Clear legacy/local keys
-        try {
-            localStorage.removeItem('localState');
-            localStorage.removeItem('localStateTimestamp');
-            localStorage.removeItem('state');
-            localStorage.removeItem('serverStateTimestamp');
-            // Also clear our current per-user key if present
-            const uidKey = user?.uid ? `tdee-calc-data-${user.uid}` : 'tdee-calc-data';
-            localStorage.removeItem(uidKey);
-        } catch {}
-
-        if (user?.uid) {
-            try {
-                await Promise.all([
-                    remove(ref(database, `states/${user.uid}`)),
-                    remove(ref(database, `manualStates/${user.uid}`))
-                ]);
-                window.location.reload();
-            } catch (err) {
-                console.error('Failed to nuke remote data', err);
-            }
-        } else {
-            window.location.reload();
-        }
-    }, [user?.uid]);
+    if (needsSetup) {
+        return (
+            <Container maxW="100%" py={6}>
+                <Card bg={config.backgroundNav} shadow="sm">
+                    <CardBody textAlign="center" py={10}>
+                        <VStack spacing={4}>
+                            <Calendar size={48} color={config.test4} />
+                            <Heading size="md" color={config.black}>
+                                Welcome to TDEE Calculator
+                            </Heading>
+                            <Text color="gray.600" maxW="md">
+                                Before you can start tracking, please complete the initial setup 
+                                with your starting weight, goal, and preferences.
+                            </Text>
+                            <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
+                                Go to Setup in the menu to get started
+                            </Badge>
+                        </VStack>
+                    </CardBody>
+                </Card>
+            </Container>
+        );
+    }
 
     return (
-        <>
-        <Container minW='100%'>
-            <Heading size={'md'} mt={1} mb={3} fontWeight="bold">Welcome Back!</Heading>
-            <Heading size={'sm'} my={3} >This is week 4 of your diet! You have lost 12kg so far!</Heading>
+        <Container maxW="100%" py={2}>
+            {/* Page Title */}
+            <Heading size="md" color={config.black} mb={4}>Calculator</Heading>
+            
+            {/* Header Stats */}
+            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4} mb={6}>
+                {/* Daily Target - First and emphasized */}
+                <Card bg={config.test5} color="white" shadow="sm">
+                    <CardBody py={3} px={4}>
+                        <Stat size="sm">
+                            <HStack spacing={2} mb={1} justify="space-between">
+                                <HStack spacing={2}>
+                                    <Target size={16} />
+                                    <StatLabel fontSize="xs" opacity={0.9}>Daily Target</StatLabel>
+                                </HStack>
+                                <Tooltip 
+                                    label={`TDEE (${currentTdee.toLocaleString()}) ${isWeightLoss ? '−' : '+'} ${Math.abs(dailyKcalChange)} kcal ${isWeightLoss ? 'deficit' : 'surplus'} = ${recommendedDailyIntake.toLocaleString()} kcal`}
+                                    fontSize="xs"
+                                    bg="gray.800"
+                                    placement="top"
+                                    hasArrow
+                                >
+                                    <Box cursor="pointer" opacity={0.7} _hover={{ opacity: 1 }}>
+                                        <Info size={14} />
+                                    </Box>
+                                </Tooltip>
+                            </HStack>
+                            <StatNumber fontSize="xl">
+                                {recommendedDailyIntake > 0 ? recommendedDailyIntake.toLocaleString() : '—'}
+                            </StatNumber>
+                            <StatHelpText fontSize="xs" mb={0} opacity={0.9}>
+                                {isWeightLoss ? 'deficit' : 'surplus'}
+                            </StatHelpText>
+                        </Stat>
+                    </CardBody>
+                </Card>
 
-            <Flex wrap="wrap" gap={4} mb={5} justify="space-between">
-                <TDEECard date='yesterday' totalEnergyExpenditure={2300} flex="1" />
-                <TDEECard date='today' totalEnergyExpenditure={2400} flex="1" />
-                <TDEECard date='tomorrow' totalEnergyExpenditure={2350} flex="1" />
-                <TDEECard date='last week' totalEnergyExpenditure={2280} flex="1" />
-            </Flex>
-            <WeekSummary />
+                {/* Current TDEE */}
+                <Card bg="white" shadow="sm" borderWidth="1px" borderColor="gray.100">
+                    <CardBody py={3} px={4}>
+                        <Stat size="sm">
+                            <HStack spacing={2} mb={1} justify="space-between">
+                                <HStack spacing={2}>
+                                    <Flame size={16} color={config.test5} />
+                                    <StatLabel fontSize="xs" color="gray.500">Your TDEE</StatLabel>
+                                </HStack>
+                                <Tooltip 
+                                    label={(() => {
+                                        const validTdees = tdeeOverTime.filter(t => t > 0);
+                                        if (validTdees.length === 0) return 'No data yet';
+                                        if (validTdees.length === 1) return `Initial estimate: ${validTdees[0].toLocaleString()} kcal`;
+                                        
+                                        const weeklyTdees = validTdees.slice(1); // Skip initial estimate
+                                        
+                                        // If enough weekly data, show only weekly TDEEs
+                                        if (weeklyTdees.length >= weeksForAvg) {
+                                            const startIdx = weeklyTdees.length - weeksForAvg;
+                                            const usedTdees = weeklyTdees.slice(startIdx);
+                                            const labels = usedTdees.map((t, i) => `W${startIdx + i + 1}: ${t.toLocaleString()}`);
+                                            return `(${labels.join(' + ')}) ÷ ${usedTdees.length} = ${currentTdee.toLocaleString()} kcal`;
+                                        }
+                                        
+                                        // Not enough weekly data, include initial estimate
+                                        const startIdx = Math.max(0, validTdees.length - weeksForAvg);
+                                        const usedTdees = validTdees.slice(startIdx);
+                                        const labels = usedTdees.map((t, i) => {
+                                            const actualIdx = startIdx + i;
+                                            return actualIdx === 0 ? `Est: ${t.toLocaleString()}` : `W${actualIdx}: ${t.toLocaleString()}`;
+                                        });
+                                        return `(${labels.join(' + ')}) ÷ ${usedTdees.length} = ${currentTdee.toLocaleString()} kcal`;
+                                    })()}
+                                    fontSize="xs"
+                                    bg="gray.800"
+                                    placement="top"
+                                    hasArrow
+                                >
+                                    <Box cursor="pointer" color="gray.400" _hover={{ color: 'gray.600' }}>
+                                        <Info size={14} />
+                                    </Box>
+                                </Tooltip>
+                            </HStack>
+                            <StatNumber fontSize="xl" color={config.black}>
+                                {currentTdee > 0 ? currentTdee.toLocaleString() : '—'}
+                            </StatNumber>
+                            <StatHelpText fontSize="xs" mb={0}>kcal/day</StatHelpText>
+                        </Stat>
+                    </CardBody>
+                </Card>
 
-            <NewWeekButton />
-            <Flex gap={2} mt={2}>
-                <Button 
-                    onClick={handleFetchData} 
-                    isDisabled={!user}
+                {/* Current Weight */}
+                <Card bg="white" shadow="sm" borderWidth="1px" borderColor="gray.100">
+                    <CardBody py={3} px={4}>
+                        <Stat size="sm">
+                            <HStack spacing={2} mb={1}>
+                                <Scale size={16} color={config.test5} />
+                                <StatLabel fontSize="xs" color="gray.500">Current</StatLabel>
+                            </HStack>
+                            <StatNumber fontSize="xl" color={config.black}>
+                                {currentAvgWeight > 0 ? currentAvgWeight.toFixed(1) : '—'}
+                            </StatNumber>
+                            <StatHelpText fontSize="xs" mb={0}>{weightUnit}</StatHelpText>
+                        </Stat>
+                    </CardBody>
+                </Card>
+
+                {/* Progress */}
+                <Card bg="white" shadow="sm" borderWidth="1px" borderColor="gray.100">
+                    <CardBody py={3} px={4}>
+                        <Stat size="sm">
+                            <HStack spacing={2} mb={1}>
+                                {isWeightLoss ? <TrendingDown size={16} color={config.test5} /> : <TrendingUp size={16} color={config.test5} />}
+                                <StatLabel fontSize="xs" color="gray.500">Progress</StatLabel>
+                            </HStack>
+                            <StatNumber fontSize="xl" color={totalWeightChange !== 0 ? config.test5 : config.black}>
+                                {totalWeightChange !== 0 ? `${totalWeightChange > 0 ? '-' : '+'}${Math.abs(totalWeightChange).toFixed(1)}` : '—'}
+                            </StatNumber>
+                            <StatHelpText fontSize="xs" mb={0}>
+                                {weeksToGoal > 0 ? `${weeksToGoal} weeks left` : weightUnit}
+                            </StatHelpText>
+                        </Stat>
+                    </CardBody>
+                </Card>
+            </SimpleGrid>
+
+            {/* Week Info Header */}
+            <Card bg={config.backgroundNav} mb={4} shadow="sm">
+                <CardBody py={3} px={4}>
+                    <Flex justify="space-between" align="center">
+                        {/* Left side - Week info */}
+                        <VStack align="start" spacing={0}>
+                            <Heading size="sm" color={config.black}>
+                                Week {selectedWeek} of {weekNumber}
+                            </Heading>
+                            {currentWeekCalc && currentWeekCalc.avgKcal > 0 && (
+                                <Text fontSize="xs" color="gray.500">
+                                    Avg: {Math.round(currentWeekCalc.avgKcal)} kcal • {currentWeekCalc.avgWeight.toFixed(1)} {weightUnit}
+                                </Text>
+                            )}
+                        </VStack>
+                        
+                        {/* Right side - Week TDEE & Delta (only show when week has both kcal and weight data) */}
+                        {currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && (
+                            <HStack spacing={4}>
+                                {/* Weight Change this week */}
+                                <VStack align="end" spacing={0}>
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
+                                        This Week
+                                    </Text>
+                                    <Text 
+                                        fontSize="lg" 
+                                        fontWeight="bold" 
+                                        color={
+                                            currentWeekCalc.weightChange === 0 
+                                                ? 'gray.500'
+                                                : isWeightLoss 
+                                                    ? (currentWeekCalc.weightChange < 0 ? config.test5 : 'red.500')
+                                                    : (currentWeekCalc.weightChange > 0 ? config.test5 : 'red.500')
+                                        }
+                                    >
+                                        {currentWeekCalc.weightChange === 0 
+                                            ? '—' 
+                                            : `${currentWeekCalc.weightChange > 0 ? '+' : ''}${currentWeekCalc.weightChange.toFixed(2)} ${weightUnit}`
+                                        }
+                                    </Text>
+                                </VStack>
+                                
+                                {/* Week TDEE */}
+                                <VStack align="end" spacing={0}>
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
+                                        Week TDEE
+                                    </Text>
+                                    <Text fontSize="lg" fontWeight="bold" color={config.test5}>
+                                        {currentWeekCalc.weeklyTdee > 0 
+                                            ? Math.round(currentWeekCalc.weeklyTdee).toLocaleString()
+                                            : '—'
+                                        }
+                                    </Text>
+                                </VStack>
+                            </HStack>
+                        )}
+                    </Flex>
+                </CardBody>
+            </Card>
+
+            {/* Day Cards Grid */}
+            {currentWeek && (
+                <SimpleGrid columns={{ base: 2, md: 4, lg: 7 }} spacing={4} mb={6}>
+                    {currentWeek.days.map((day, index) => (
+                        <DayCard
+                            key={`day-${selectedWeek}-${index}`}
+                            dayIndex={index}
+                            weekNumber={selectedWeek}
+                            startDate={startDate}
+                            day={day}
+                            isEditable={!currentWeek.locked}
+                            weeklyTarget={currentWeekCalc?.weeklyTarget || 0}
+                        />
+                    ))}
+                </SimpleGrid>
+            )}
+
+            {/* Add New Week Button - Centered */}
+            <Flex justify="center" mb={8}>
+                <Button
+                    leftIcon={<Plus size={18} />}
+                    size="lg"
+                    bg={config.test5}
+                    color="white"
+                    _hover={{ bg: config.test4, transform: 'translateY(-1px)' }}
+                    _active={{ bg: config.test4 }}
+                    onClick={addNewWeek}
+                    shadow="md"
+                    transition="all 0.2s"
+                    px={8}
                 >
-                    Fetch Data
-                </Button>
-                <Button 
-                    colorScheme='red'
-                    variant='outline'
-                    onClick={handleNukeData}
-                >
-                    Nuke Data
+                    Add New Week
                 </Button>
             </Flex>
 
-            <WeekSelector startDate={startDate} />
-        </Container>
-        {(syncing || loading) && (
-            <Box position="fixed" top={4} right={4} zIndex={1000}>
-                <Spinner thickness='3px' speed='0.7s' emptyColor='gray.200' color='black.100' size='xl' />
+            {/* Monthly Calendar View */}
+            <Box>
+                <WeekCalendar startDate={startDate} />
             </Box>
-        )}
-        </>
+
+            {/* Loading indicator */}
+            {(syncing || loading) && (
+                <Box position="fixed" bottom={4} right={4} zIndex={1000}>
+                    <HStack 
+                        bg="white" 
+                        px={4} 
+                        py={2} 
+                        borderRadius="full" 
+                        shadow="lg"
+                        borderWidth="1px"
+                        borderColor="gray.200"
+                    >
+                        <Spinner size="sm" color={config.test5} />
+                        <Text fontSize="sm" color="gray.600">
+                            {syncing ? 'Syncing...' : 'Loading...'}
+                        </Text>
+                    </HStack>
+                </Box>
+            )}
+        </Container>
     );
 };
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, Button, Box, FormControl, FormLabel, Image } from '@chakra-ui/react';
+import { Input, Button, Box, FormControl, FormLabel, Image, Text, Divider, VStack } from '@chakra-ui/react';
 import { useCustomToast } from '../../utils/useCustomToast';
 import { config } from '../../config';
 import { useAuth } from '../../stores/auth/authStore';
@@ -10,7 +10,7 @@ function Auth() {
     const navigate = useNavigate();
     const showToast = useCustomToast();
 
-    const { user, signIn, register } = useAuth();
+    const { isAuthenticated, signIn, register, continueAsGuest } = useAuth();
     const { loading } = useInterface();
 
     const [email, setEmail] = useState('');
@@ -60,9 +60,14 @@ function Auth() {
         setIsRegistering(!isRegistering);
     };
 
+    const handleContinueAsGuest = () => {
+        continueAsGuest();
+        navigate(config.startingPoint);
+    };
+
     useEffect(() => {
-        if (user) navigate(config.startingPoint);
-    }, [user, navigate]);
+        if (isAuthenticated) navigate(config.startingPoint);
+    }, [isAuthenticated, navigate]);
     
     return (
         <Box display="flex" justifyContent="center" alignItems="center" flexDirection='column' height="100vh" className='animated-bg'>
@@ -102,6 +107,24 @@ function Auth() {
                         {isRegistering ? 'Sign Up' : loading ? 'Loading...' : 'Sign In'}
                     </Button>
                 </Box>
+                
+                <VStack mt={6} spacing={3}>
+                    <Divider />
+                    <Text fontSize="sm" color="gray.500">
+                        Or use without an account
+                    </Text>
+                    <Button 
+                        variant='outline' 
+                        colorScheme='gray' 
+                        width="100%" 
+                        onClick={handleContinueAsGuest}
+                    >
+                        Continue as Guest
+                    </Button>
+                    <Text fontSize="xs" color="gray.400" textAlign="center">
+                        Data will be saved locally in your browser only
+                    </Text>
+                </VStack>
             </Box>
         </Box>
     );
