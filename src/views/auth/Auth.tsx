@@ -1,37 +1,50 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// useDispatch and useSelector are used to interact with the Redux store
-import { useSelector, useDispatch } from 'react-redux';
-// AppDispatch and RootState are used to type the useDispatch and useSelector hooks
-import { AppDispatch, RootState } from '../app/store';
-import { User } from 'firebase/auth';
-import { signIn, register } from '../stores/auth/authSlice';
-import { InterfaceState } from "../stores/interface/interfaceSlice";
-import { Input, Button, Box, FormControl, FormLabel, Image } from '@chakra-ui/react';
-import { useCustomToast } from '../utils/useCustomToast';
-import { config } from '../config';
-
+import { Input, Button, Box, FormControl, FormLabel, Image, Text, Divider, VStack } from '@chakra-ui/react';
+import { useCustomToast } from '../../utils/useCustomToast';
+import { config } from '../../config';
+import { useAuth } from '../../stores/auth/authStore';
+import { useInterface } from '../../stores/interface/interfaceStore';
 
 function Auth() {
     const navigate = useNavigate();
-    const dispatch = useDispatch<AppDispatch>();
     const showToast = useCustomToast();
 
-    const user: User | null = useSelector((state: RootState) => state.auth.user);
-    const { loading }: InterfaceState = useSelector((state: RootState) => state.interface);
+    const { isAuthenticated, signIn, register, continueAsGuest } = useAuth();
+    const { loading } = useInterface();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isRegistering, setIsRegistering] = useState(false);
 
-    const handleSignIn = () => {
-        dispatch(signIn({ email, password }));
+    const handleSignIn = async () => {
+        try {
+            await signIn(email, password);
+        } catch (error) {
+            showToast({
+                title: 'Error',
+                description: 'Invalid email or password',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+        }
     };
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         if (password === confirmPassword) {
-            dispatch(register({ email, password }));
+            try {
+                await register(email, password);
+            } catch (error) {
+                showToast({
+                    title: 'Error',
+                    description: 'Registration failed',
+                    status: 'error',
+                    duration: 5000,
+                    isClosable: true,
+                });
+            }
         } else {
             showToast({
                 title: 'Error',
@@ -39,8 +52,7 @@ function Auth() {
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
-            })
-            
+            });
         }
     };
 
@@ -48,14 +60,19 @@ function Auth() {
         setIsRegistering(!isRegistering);
     };
 
+    const handleContinueAsGuest = () => {
+        continueAsGuest();
+        navigate(config.startingPoint);
+    };
+
     useEffect(() => {
-        if (user) navigate(config.startingPoint);
-    }, [user, navigate]);
+        if (isAuthenticated) navigate(config.startingPoint);
+    }, [isAuthenticated, navigate]);
     
     return (
         <Box display="flex" justifyContent="center" alignItems="center" flexDirection='column' height="100vh" className='animated-bg'>
             <Box width='400px' background={'white'} p={4}>
-                <Image src={require('../assets/tdeefitteal.png')} mb={10}/>
+                <Image src={require('../../assets/tdeefitteal.png')} mb={10}/>
             </Box>
             <Box width="400px" background={'white'} p={4}>
                 <FormControl>
@@ -90,6 +107,24 @@ function Auth() {
                         {isRegistering ? 'Sign Up' : loading ? 'Loading...' : 'Sign In'}
                     </Button>
                 </Box>
+                
+                <VStack mt={6} spacing={3}>
+                    <Divider />
+                    <Text fontSize="sm" color="gray.500">
+                        Or use without an account
+                    </Text>
+                    <Button 
+                        variant='outline' 
+                        colorScheme='gray' 
+                        width="100%" 
+                        onClick={handleContinueAsGuest}
+                    >
+                        Continue as Guest
+                    </Button>
+                    <Text fontSize="xs" color="gray.400" textAlign="center">
+                        Data will be saved locally in your browser only
+                    </Text>
+                </VStack>
             </Box>
         </Box>
     );

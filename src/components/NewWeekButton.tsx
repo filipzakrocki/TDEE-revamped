@@ -1,6 +1,6 @@
 import React from 'react';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../app/store';
+import { useCalc } from '../stores/calc/calcStore';
+import { useDisclosure } from '@chakra-ui/react';
 import {
     Button,
     AlertDialog,
@@ -9,18 +9,15 @@ import {
     AlertDialogHeader,
     AlertDialogContent,
     AlertDialogOverlay,
-    useDisclosure
 } from '@chakra-ui/react';
-import { addNewWeek } from '../stores/calc/calcSlice';
 
 const NewWeekButton: React.FC = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const cancelRef = React.useRef<HTMLButtonElement>(null);
-    const dispatch = useDispatch<AppDispatch>();
-
+    const { addNewWeek } = useCalc();
 
     const handleNewWeek = () => {
-        dispatch(addNewWeek());
+        addNewWeek();
         onClose();
     };
 

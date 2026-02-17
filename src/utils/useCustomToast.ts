@@ -1,4 +1,5 @@
 import { useToast } from '@chakra-ui/react';
+import { useCallback } from 'react';
 
 interface ToastConfig {
     title?: string;
@@ -12,7 +13,7 @@ interface ToastConfig {
 export function useCustomToast() {
     const toast = useToast();
 
-    const showToast = (config: ToastConfig) => {
+    const showToast = useCallback((config: ToastConfig) => {
         const { title = '', description, status = 'info', duration = 3000, isClosable = true, position = 'bottom-right' } = config;
         toast({
             title,
@@ -22,7 +23,7 @@ export function useCustomToast() {
             isClosable,
             position
         });
-    };
+    }, [toast]);
 
     return showToast;
 }

@@ -8,26 +8,30 @@
     "@chakra-ui/react": "^2.10.4",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
+    "@fontsource/lato": "^5.1.1",
+    "@fontsource/raleway": "^5.1.1",
     "@reduxjs/toolkit": "^2.2.3",
     "@types/jest": "^29.5.12",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",
     "axios": "^1.6.8",
+    "date-fns": "^4.1.0",
     "firebase": "^10.11.1",
     "framer-motion": "^11.1.7",
     "lucide-react": "^0.474.0",
-    "moment": "^2.30.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-redux": "^9.1.1",
     "react-router-dom": "^6.26.1",
     "react-scripts": "^5.0.1",
+    "recharts": "^3.5.1",
     "sass": "^1.83.0",
-    "web-vitals": "^3.5.0"
+    "web-vitals": "^3.5.0",
+    "zustand": "^5.0.3"
   },
   "scripts": {
     "dev": "react-scripts start",
-    "build": "react-scripts build"
+    "build": "react-scripts build",
+    "analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js"
   },
   "eslintConfig": {
     "extends": [
@@ -45,5 +49,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }
