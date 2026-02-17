@@ -29,10 +29,18 @@ interface Config {
     footerHeight: number;
     sidenavWidth: string;
     leftPanelWidth: number;
-    rightPanelWidth: number;
-    minRightPanelWidth: number;
+    layoutGutter: number;    // outer left/right gutters: gutter–side–main–gutter, Chakra spacing scale
+    contentGutter: number;   // horizontal padding inside main panel, Chakra spacing scale
+    mainPanelMaxWidth: string;
     mainFrameHeight:  string;
     borderRadius: number;
+
+    /** Chakra spacing (or px number) for margin below logo in sidenav */
+    sidenavLogoMb: number;
+    /** Main panel margin-bottom on mobile (space above bottom nav), e.g. '55px' */
+    mobileBottomNavMb: string;
+    /** Breakpoint below which mobile layout (bottom nav) is used, e.g. 'md' */
+    mobileBreakpoint: string;
 
     menuItems: MenuItem[]
 }
@@ -78,10 +86,15 @@ export const config: Config = {
     footerHeight: 60,
     sidenavWidth: '100px',
     leftPanelWidth: 20,
-    rightPanelWidth: 5,
-    minRightPanelWidth: 300,
+    layoutGutter: 2,         // 8px – outer gutters (half of previous 20px)
+    contentGutter: 8,        // 32px – padding inside main panel
+    mainPanelMaxWidth: '1280px',
     mainFrameHeight: `calc(100vh - 50px)`,
     borderRadius: 15,
+
+    sidenavLogoMb: 200,
+    mobileBottomNavMb: '55px',
+    mobileBreakpoint: 'md',
 
     // menu items
     menuItems: [
