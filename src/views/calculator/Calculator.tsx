@@ -151,7 +151,7 @@ const Calculator: React.FC = () => {
             <Heading size="md" color={config.black} mb={4}>Calculator</Heading>
             
             {/* Header Stats */}
-            <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={4} mb={6}>
+            <SimpleGrid columns={{ base: 2, lg: 4 }} spacing={4} mb={6}>
                 {/* Daily Target - First and emphasized */}
                 <Card bg={config.test5} color="white" shadow="sm">
                     <CardBody py={3} px={4}>

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
     Box,
     Flex,
@@ -43,7 +43,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
     const displayWeeks = weekData.filter(w => w.week >= 1);
     
     // Get the current week's start date to determine which month to show
-    const getWeekStartDate = (weekNumber: number): Date => {
+    const getWeekStartDate = useCallback((weekNumber: number): Date => {
         if (!startDate) return new Date();
         try {
             const start = parseISO(startDate);
@@ -51,9 +51,8 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
         } catch {
             return new Date();
         }
-    };
-    
-    const selectedWeekStart = getWeekStartDate(selectedWeek);
+    }, [startDate]);
+
     const [viewMonth, setViewMonth] = React.useState<Date>(() => getWeekStartDate(selectedWeek));
 
     const dietStartDate = startDate ? parseISO(startDate) : new Date();
@@ -69,7 +68,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
     // Update view month only when user selects a different week (e.g. by clicking a day)
     React.useEffect(() => {
         setViewMonth(getWeekStartDate(selectedWeek));
-    }, [selectedWeek, startDate]);
+    }, [selectedWeek, getWeekStartDate]);
     
     // Build a map of weekNumber -> weeklyTarget for quick lookup
     const weekTargetMap = useMemo(() => {

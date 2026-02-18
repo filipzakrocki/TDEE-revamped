@@ -11,6 +11,11 @@ interface ToastOptions {
     position?: 'top' | 'top-right' | 'top-left' | 'bottom' | 'bottom-right' | 'bottom-left';
 }
 
+const getDefaultPosition = (): ToastOptions['position'] => {
+    if (typeof window === 'undefined') return 'bottom-right';
+    return window.innerWidth < 768 ? 'top' : 'bottom-right';
+};
+
 const defaultOptions = {
     duration: 3000,
     isClosable: true,
@@ -20,6 +25,7 @@ const defaultOptions = {
 export const showToast = (options: ToastOptions) => {
     toast({
         ...defaultOptions,
+        position: options.position ?? getDefaultPosition(),
         ...options
     });
 };
