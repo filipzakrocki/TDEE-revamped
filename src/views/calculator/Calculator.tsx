@@ -18,8 +18,10 @@ import {
     Badge,
     Button,
     Tooltip,
+    IconButton,
 } from '@chakra-ui/react';
-import { Plus, Flame, Target, TrendingDown, TrendingUp, Scale, Calendar, Info } from 'lucide-react';
+import { addDays, parseISO, format } from 'date-fns';
+import { Plus, Flame, Target, TrendingDown, TrendingUp, Scale, Calendar, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import WeekCalendar from './components/WeekCalendar';
 import DayCard from './components/DayCard';
@@ -117,7 +119,29 @@ const Calculator: React.FC = () => {
     const currentWeekCalc = weekCalculations.find(w => w.weekNumber === selectedWeek);
     const weightUnit = isMetricSystem ? 'kg' : 'lbs';
     const weekNumber = displayWeeks.length;
-    
+
+    const weekStartDate = startDate ? addDays(parseISO(startDate), (selectedWeek - 1) * 7) : new Date();
+    const weekEndDate = addDays(weekStartDate, 6);
+    const weekDateRange = startDate ? `${format(weekStartDate, 'MMM d')} - ${format(weekEndDate, 'MMM d')}` : '—';
+
+    const prevWeekCalc = weekCalculations.find(w => w.weekNumber === selectedWeek - 1);
+    const avgKcalOnTarget = currentWeekCalc && currentWeekCalc.weeklyTarget > 0 && currentWeekCalc.avgKcal > 0
+        ? (isWeightLoss ? currentWeekCalc.avgKcal <= currentWeekCalc.weeklyTarget : currentWeekCalc.avgKcal >= currentWeekCalc.weeklyTarget)
+        : false;
+    const avgKcalOffTarget = currentWeekCalc && currentWeekCalc.weeklyTarget > 0 && currentWeekCalc.avgKcal > 0
+        ? (isWeightLoss ? currentWeekCalc.avgKcal > currentWeekCalc.weeklyTarget : currentWeekCalc.avgKcal < currentWeekCalc.weeklyTarget)
+        : false;
+    const avgWeightOnTarget = currentWeekCalc && currentWeekCalc.avgWeight > 0 && (
+        selectedWeek === 1
+            ? startWeight > 0 && currentWeekCalc.avgWeight <= startWeight
+            : prevWeekCalc != null && prevWeekCalc.avgWeight > 0 && (isWeightLoss ? currentWeekCalc.avgWeight < prevWeekCalc.avgWeight : currentWeekCalc.avgWeight > prevWeekCalc.avgWeight)
+    );
+    const avgWeightOffTarget = currentWeekCalc && currentWeekCalc.avgWeight > 0 && (
+        selectedWeek === 1
+            ? startWeight > 0 && currentWeekCalc.avgWeight > startWeight
+            : prevWeekCalc != null && prevWeekCalc.avgWeight > 0 && (isWeightLoss ? currentWeekCalc.avgWeight >= prevWeekCalc.avgWeight : currentWeekCalc.avgWeight <= prevWeekCalc.avgWeight)
+    );
+
     // Check if user needs to set up first
     const needsSetup = !startDate || startWeight === 0 || goalWeight === 0;
 
@@ -273,27 +297,67 @@ const Calculator: React.FC = () => {
             {/* Week Info Header */}
             <Card bg="white" mb={4} shadow="sm">
                 <CardBody py={3} px={4}>
-                    <Flex justify="space-between" align="center">
-                        {/* Left side - Week info */}
-                        <VStack align="start" spacing={0}>
-                            <Heading size="sm" color={config.black}>
-                                Week {selectedWeek} of {weekNumber}
-                            </Heading>
-                            <Text fontSize="xs" color="gray.500">
-                                {currentWeekCalc && currentWeekCalc.avgKcal > 0
-                                    ? `Avg: ${Math.round(currentWeekCalc.avgKcal)} kcal • ${currentWeekCalc.avgWeight.toFixed(1)} ${weightUnit}`
-                                    : '—'}
-                            </Text>
-                        </VStack>
+                    <Flex justify="space-between" align="center" wrap="wrap" gap={3}>
+                        {/* Left: Week Kcal + Week Weight (same style as right) */}
+                        <HStack spacing={4}>
+                            <VStack align="start" spacing={0}>
+                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
+                                    Week Kcal
+                                </Text>
+                                <Text fontSize="sm" fontWeight="bold" color={avgKcalOnTarget ? config.test5 : avgKcalOffTarget ? 'red.500' : config.black}>
+                                    {currentWeekCalc && currentWeekCalc.avgKcal > 0
+                                        ? Math.round(currentWeekCalc.avgKcal).toLocaleString()
+                                        : '—'}
+                                </Text>
+                            </VStack>
+                            <VStack align="start" spacing={0}>
+                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
+                                    Week Weight
+                                </Text>
+                                <Text fontSize="sm" fontWeight="bold" color={avgWeightOnTarget ? config.test5 : avgWeightOffTarget ? 'red.500' : config.black}>
+                                    {currentWeekCalc && currentWeekCalc.avgWeight > 0
+                                        ? `${currentWeekCalc.avgWeight.toFixed(1)} ${weightUnit}`
+                                        : '—'}
+                                </Text>
+                            </VStack>
+                        </HStack>
 
-                        {/* Right side - always show for uniform layout */}
+                        {/* Middle: Week N of M, date range, arrows */}
+                        <Flex align="center" gap={2}>
+                            <IconButton
+                                aria-label="Previous week"
+                                icon={<ChevronLeft size={20} />}
+                                variant="ghost"
+                                size="sm"
+                                isDisabled={selectedWeek <= 1}
+                                onClick={() => selectWeek(selectedWeek - 1)}
+                            />
+                            <VStack align="center" spacing={0}>
+                                <Text fontSize="sm" fontWeight="bold" color={config.black}>
+                                    {weekDateRange}
+                                </Text>
+                                <Text fontSize="xs" color="gray.500">
+                                    Week {selectedWeek} of {weekNumber}
+                                </Text>
+                            </VStack>
+                            <IconButton
+                                aria-label="Next week"
+                                icon={<ChevronRight size={20} />}
+                                variant="ghost"
+                                size="sm"
+                                isDisabled={selectedWeek >= weekNumber}
+                                onClick={() => selectWeek(selectedWeek + 1)}
+                            />
+                        </Flex>
+
+                        {/* Right: This Week delta + Week TDEE */}
                         <HStack spacing={4}>
                             <VStack align="end" spacing={0}>
                                 <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
                                     This Week
                                 </Text>
                                 <Text
-                                    fontSize="lg"
+                                    fontSize="sm"
                                     fontWeight="bold"
                                     color={
                                         currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0
@@ -312,7 +376,7 @@ const Calculator: React.FC = () => {
                                 <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
                                     Week TDEE
                                 </Text>
-                                <Text fontSize="lg" fontWeight="bold" color={config.test5}>
+                                <Text fontSize="sm" fontWeight="bold" color={config.test5}>
                                     {currentWeekCalc && currentWeekCalc.weeklyTdee > 0
                                         ? Math.round(currentWeekCalc.weeklyTdee).toLocaleString()
                                         : '—'}
