@@ -265,15 +265,17 @@ export const useCalcStore = create<CalcState>((set) => ({
     },
 
     addNewWeek: () => set((state) => {
+        const newWeekNumber = state.weekData.length;
         const newState = {
             ...state,
             weekData: [...state.weekData, {
-                week: state.weekData.length,
+                week: newWeekNumber,
                 days: Array(7).fill(null).map(() => ({ kg: '', kcal: '' }) as { kg: number | ''; kcal: number | '' }),
                 avgKcal: 0,
                 avgWeight: 0,
                 locked: false
-            }]
+            }],
+            selectedWeek: newWeekNumber,
         };
         debouncedSync(newState);
         showSuccessToast('New week added');
