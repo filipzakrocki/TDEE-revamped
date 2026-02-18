@@ -41,6 +41,7 @@ const syncToStorage = (state: CalcState) => {
 
 function toPayload(state: CalcState): CalcPayload {
     return {
+        calendarWeekStartsOnMonday: state.calendarWeekStartsOnMonday,
         startDate: state.startDate,
         startWeight: state.startWeight,
         goalWeight: state.goalWeight,
@@ -129,6 +130,7 @@ interface CalcPayload {
     avgTdeeOverTime: number[];
     avgWeight: number;
     avgWeightOverTime: number[];
+    calendarWeekStartsOnMonday: boolean;
     dailyKcalChange: number;
     goalWeight: number;
     initialInputsLocked: boolean;
@@ -168,11 +170,13 @@ interface CalcState extends CalcPayload {
     setWeeksForAvg: (weeks: number) => void;
     toggleMeasurementSystem: () => void;
     toggleCompactView: () => void;
+    toggleCalendarWeekStart: () => void;
     lockInitialInputs: () => void;
 }
 
 export const useCalcStore = create<CalcState>((set) => ({
     fetched: false,
+    calendarWeekStartsOnMonday: true,
     startDate: "",
     startWeight: 0,
     goalWeight: 0,
@@ -216,8 +220,8 @@ export const useCalcStore = create<CalcState>((set) => ({
             const dataRef = ref(database, `states/${uid}`);
             const snapshot = await get(dataRef);
             if (snapshot.exists()) {
-                console.log(snapshot.val());
-                set(snapshot.val());
+                const data = snapshot.val();
+                set((state) => ({ ...state, ...data }));
                 fetchDataSuccess();
                 showSuccessToast('Data loaded successfully');
             } else {
@@ -250,7 +254,7 @@ export const useCalcStore = create<CalcState>((set) => ({
 
             if (stored) {
                 const parsedData = JSON.parse(stored);
-                set(parsedData);
+                set((state) => ({ ...state, ...parsedData }));
                 console.log(`Data loaded from localStorage with key: ${storageKey}`);
             } else {
                 console.log('No stored data found');
@@ -289,11 +293,10 @@ export const useCalcStore = create<CalcState>((set) => ({
         return newState;
     }),
 
-    selectWeek: (weekNumber: number) => set((state) => {
-        const newState = { ...state, selectedWeek: weekNumber };
-        debouncedSync(newState);
-        return newState;
-    }),
+    selectWeek: (weekNumber: number) => set((state) => ({
+        ...state,
+        selectedWeek: weekNumber,
+    })),
 
     toggleWeekLock: (weekNumber: number) => set((state) => {
         const newWeekData = [...state.weekData];
@@ -413,6 +416,12 @@ export const useCalcStore = create<CalcState>((set) => ({
         return newState;
     }),
 
+    toggleCalendarWeekStart: () => set((state) => {
+        const newState = { ...state, calendarWeekStartsOnMonday: !state.calendarWeekStartsOnMonday };
+        debouncedSync(newState);
+        return newState;
+    }),
+
     lockInitialInputs: () => set((state) => {
         const newState = { ...state, initialInputsLocked: true };
         debouncedSync(newState);
@@ -423,6 +432,7 @@ export const useCalcStore = create<CalcState>((set) => ({
 export const useCalc = () => ({
     // State values
     fetched: useCalcStore(state => state.fetched),
+    calendarWeekStartsOnMonday: useCalcStore(state => state.calendarWeekStartsOnMonday),
     startDate: useCalcStore(state => state.startDate),
     startWeight: useCalcStore(state => state.startWeight),
     goalWeight: useCalcStore(state => state.goalWeight),
@@ -461,5 +471,6 @@ export const useCalc = () => ({
     setWeeksForAvg: useCalcStore(state => state.setWeeksForAvg),
     toggleMeasurementSystem: useCalcStore(state => state.toggleMeasurementSystem),
     toggleCompactView: useCalcStore(state => state.toggleCompactView),
+    toggleCalendarWeekStart: useCalcStore(state => state.toggleCalendarWeekStart),
     lockInitialInputs: useCalcStore(state => state.lockInitialInputs),
 })

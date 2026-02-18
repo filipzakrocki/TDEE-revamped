@@ -86,9 +86,16 @@ Central hook that computes:
 Main tracking view:
 - **Header Stats**: Daily Target, Your TDEE, Current Weight, Progress (with info tooltips)
 - **Week Info Card**: Selected week's avg kcal/weight, delta, weekly TDEE
-- **Day Cards Grid**: 7 day input cards with target coloring
+- **Day Cards**: 7 day input cards in a horizontal row (see **Day cards layout** below)
 - **Add New Week Button**
 - **Monthly Calendar**: Navigate weeks, color-coded by target compliance
+
+#### Day cards layout (`DayCard.tsx`, `Calculator.tsx`)
+- **Layout**: Single horizontal row inside a scrollable container (`overflowX="auto"`). No carousel; no grid on breakpoints.
+- **Sizing**: Each card is **140px** wide, **285px** tall. Cards are in a `Flex` with `flex={1}` and `minW="140px"` so they grow to fill width on large screens and trigger horizontal scroll when the viewport is narrower than 7×140px + gaps.
+- **Centering**: Cards are centered in their flex cell (`justifyContent="center"` on wrapper, `mx="auto"` on card). Gap between cards: `gap={2}` (8px).
+- **Copy/paste between days**: Click the **cutlery** (calories) or **scale** (weight) icon on a card to copy that value. Other cards’ same-type icon switches to a **paste** icon (ClipboardPaste); click paste on another day to paste. Copy only works when the field has a value. Calories paste only into calories; weight only into weight. Clicking the source icon again cancels copy mode. State lives in `Calculator` (`copyFrom`); handlers passed into each `DayCard`.
+- **Input steppers**: Both inputs have up/down controls (ChevronUp/ChevronDown) in an `InputRightAddon`. Calories: step **10**. Weight: step **0.1** (rounded to one decimal). Steppers disabled when the week is locked (not editable).
 
 ### Analytics (`/analysis`)
 - Summary stat cards (days tracked, compliance %, total change)

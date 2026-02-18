@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
     Container,
     Heading,
@@ -30,6 +30,13 @@ import { useInterface } from '../../stores/interface/interfaceStore';
 import { useTDEECalculations } from '../../hooks/useTDEECalculations';
 import { config } from '../../config';
 
+export type CopyFromState = {
+    type: 'kcal' | 'kg';
+    value: number | '';
+    weekNumber: number;
+    dayIndex: number;
+} | null;
+
 const Calculator: React.FC = () => {
     const { user, isGuest } = useAuth();
     const { 
@@ -45,7 +52,29 @@ const Calculator: React.FC = () => {
         isMetricSystem,
         dailyKcalChange,
         weeksForAvg,
+        updateDay,
     } = useCalc();
+    const [copyFrom, setCopyFrom] = useState<CopyFromState>(null);
+
+    const onCopyCalories = useCallback((weekNumber: number, dayIndex: number, value: number | '') => {
+        setCopyFrom({ type: 'kcal', value, weekNumber, dayIndex });
+    }, []);
+    const onPasteCalories = useCallback((weekNumber: number, dayIndex: number) => {
+        if (copyFrom?.type === 'kcal') {
+            updateDay({ type: 'kcal', weekNumber, dayIndex, value: copyFrom.value });
+            setCopyFrom(null);
+        }
+    }, [copyFrom, updateDay]);
+    const onCopyWeight = useCallback((weekNumber: number, dayIndex: number, value: number | '') => {
+        setCopyFrom({ type: 'kg', value, weekNumber, dayIndex });
+    }, []);
+    const onPasteWeight = useCallback((weekNumber: number, dayIndex: number) => {
+        if (copyFrom?.type === 'kg') {
+            updateDay({ type: 'kg', weekNumber, dayIndex, value: copyFrom.value });
+            setCopyFrom(null);
+        }
+    }, [copyFrom, updateDay]);
+    const onCancelCopy = useCallback(() => setCopyFrom(null), []);
     const { loading, syncing } = useInterface();
     const {
         currentTdee,
@@ -122,7 +151,7 @@ const Calculator: React.FC = () => {
             <Heading size="md" color={config.black} mb={4}>Calculator</Heading>
             
             {/* Header Stats */}
-            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4} mb={6}>
+            <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={4} mb={6}>
                 {/* Daily Target - First and emphasized */}
                 <Card bg={config.test5} color="white" shadow="sm">
                     <CardBody py={3} px={4}>
@@ -242,7 +271,7 @@ const Calculator: React.FC = () => {
             </SimpleGrid>
 
             {/* Week Info Header */}
-            <Card bg={config.backgroundNav} mb={4} shadow="sm">
+            <Card bg="white" mb={4} shadow="sm">
                 <CardBody py={3} px={4}>
                     <Flex justify="space-between" align="center">
                         {/* Left side - Week info */}
@@ -250,72 +279,81 @@ const Calculator: React.FC = () => {
                             <Heading size="sm" color={config.black}>
                                 Week {selectedWeek} of {weekNumber}
                             </Heading>
-                            {currentWeekCalc && currentWeekCalc.avgKcal > 0 && (
-                                <Text fontSize="xs" color="gray.500">
-                                    Avg: {Math.round(currentWeekCalc.avgKcal)} kcal • {currentWeekCalc.avgWeight.toFixed(1)} {weightUnit}
-                                </Text>
-                            )}
+                            <Text fontSize="xs" color="gray.500">
+                                {currentWeekCalc && currentWeekCalc.avgKcal > 0
+                                    ? `Avg: ${Math.round(currentWeekCalc.avgKcal)} kcal • ${currentWeekCalc.avgWeight.toFixed(1)} ${weightUnit}`
+                                    : '—'}
+                            </Text>
                         </VStack>
-                        
-                        {/* Right side - Week TDEE & Delta (only show when week has both kcal and weight data) */}
-                        {currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && (
-                            <HStack spacing={4}>
-                                {/* Weight Change this week */}
-                                <VStack align="end" spacing={0}>
-                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
-                                        This Week
-                                    </Text>
-                                    <Text 
-                                        fontSize="lg" 
-                                        fontWeight="bold" 
-                                        color={
-                                            currentWeekCalc.weightChange === 0 
-                                                ? 'gray.500'
-                                                : isWeightLoss 
-                                                    ? (currentWeekCalc.weightChange < 0 ? config.test5 : 'red.500')
-                                                    : (currentWeekCalc.weightChange > 0 ? config.test5 : 'red.500')
-                                        }
-                                    >
-                                        {currentWeekCalc.weightChange === 0 
-                                            ? '—' 
-                                            : `${currentWeekCalc.weightChange > 0 ? '+' : ''}${currentWeekCalc.weightChange.toFixed(2)} ${weightUnit}`
-                                        }
-                                    </Text>
-                                </VStack>
-                                
-                                {/* Week TDEE */}
-                                <VStack align="end" spacing={0}>
-                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
-                                        Week TDEE
-                                    </Text>
-                                    <Text fontSize="lg" fontWeight="bold" color={config.test5}>
-                                        {currentWeekCalc.weeklyTdee > 0 
-                                            ? Math.round(currentWeekCalc.weeklyTdee).toLocaleString()
-                                            : '—'
-                                        }
-                                    </Text>
-                                </VStack>
-                            </HStack>
-                        )}
+
+                        {/* Right side - always show for uniform layout */}
+                        <HStack spacing={4}>
+                            <VStack align="end" spacing={0}>
+                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
+                                    This Week
+                                </Text>
+                                <Text
+                                    fontSize="lg"
+                                    fontWeight="bold"
+                                    color={
+                                        currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0
+                                            ? isWeightLoss
+                                                ? (currentWeekCalc.weightChange < 0 ? config.test5 : 'red.500')
+                                                : (currentWeekCalc.weightChange > 0 ? config.test5 : 'red.500')
+                                            : 'gray.500'
+                                    }
+                                >
+                                    {currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0
+                                        ? `${currentWeekCalc.weightChange > 0 ? '+' : ''}${currentWeekCalc.weightChange.toFixed(2)} ${weightUnit}`
+                                        : '—'}
+                                </Text>
+                            </VStack>
+                            <VStack align="end" spacing={0}>
+                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
+                                    Week TDEE
+                                </Text>
+                                <Text fontSize="lg" fontWeight="bold" color={config.test5}>
+                                    {currentWeekCalc && currentWeekCalc.weeklyTdee > 0
+                                        ? Math.round(currentWeekCalc.weeklyTdee).toLocaleString()
+                                        : '—'}
+                                </Text>
+                            </VStack>
+                        </HStack>
                     </Flex>
                 </CardBody>
             </Card>
 
-            {/* Day Cards Grid */}
+            {/* Day Cards: flex to fill width, horizontal scroll when narrow */}
             {currentWeek && (
-                <SimpleGrid columns={{ base: 2, md: 4, lg: 7 }} spacing={4} mb={6}>
-                    {currentWeek.days.map((day, index) => (
-                        <DayCard
-                            key={`day-${selectedWeek}-${index}`}
-                            dayIndex={index}
-                            weekNumber={selectedWeek}
-                            startDate={startDate}
-                            day={day}
-                            isEditable={!currentWeek.locked}
-                            weeklyTarget={currentWeekCalc?.weeklyTarget || 0}
-                        />
-                    ))}
-                </SimpleGrid>
+                <Box
+                    mb={6}
+                    overflowX="auto"
+                    overflowY="hidden"
+                    css={{ WebkitOverflowScrolling: 'touch' }}
+                    pb={2}
+                    w="100%"
+                >
+                    <Flex gap={2} minW="min-content" w="100%">
+                        {currentWeek.days.map((day, index) => (
+                            <Box key={`day-${selectedWeek}-${index}`} flex={1} minW="140px" display="flex" justifyContent="center">
+                                <DayCard
+                                    dayIndex={index}
+                                    weekNumber={selectedWeek}
+                                    startDate={startDate}
+                                    day={day}
+                                    isEditable={!currentWeek.locked}
+                                    weeklyTarget={currentWeekCalc?.weeklyTarget || 0}
+                                    copyFrom={copyFrom}
+                                    onCopyCalories={onCopyCalories}
+                                    onPasteCalories={onPasteCalories}
+                                    onCopyWeight={onCopyWeight}
+                                    onPasteWeight={onPasteWeight}
+                                    onCancelCopy={onCancelCopy}
+                                />
+                            </Box>
+                        ))}
+                    </Flex>
+                </Box>
             )}
 
             {/* Add New Week Button - Centered */}
@@ -325,7 +363,7 @@ const Calculator: React.FC = () => {
                     size="lg"
                     bg={config.test5}
                     color="white"
-                    _hover={{ bg: config.test4, transform: 'translateY(-1px)' }}
+                    _hover={{ bg: config.test4 }}
                     _active={{ bg: config.test4 }}
                     onClick={addNewWeek}
                     shadow="md"

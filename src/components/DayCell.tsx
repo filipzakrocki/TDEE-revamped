@@ -58,7 +58,6 @@ const DayCell: React.FC<DayCellProps> = ({ day, dayIndex, rowIndex, weekNumber, 
             borderRadius="xl"
             boxShadow={isEditable ? 'lg' : 'sm'}
             _hover={{ 
-                transform: isEditable ? 'translateY(-2px)' : 'none', 
                 boxShadow: isEditable ? 'xl' : 'sm',
                 borderColor: isEditable ? config.test3 : 'transparent'
             }}

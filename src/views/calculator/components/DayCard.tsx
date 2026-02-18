@@ -7,13 +7,23 @@ import {
     Badge,
     InputGroup,
     InputLeftAddon,
+    InputRightAddon,
     Flex,
+    Tooltip,
+    IconButton,
 } from '@chakra-ui/react';
-import { Utensils, Scale } from 'lucide-react';
+import { Utensils, Scale, ClipboardPaste, ChevronUp, ChevronDown } from 'lucide-react';
 import { format, addDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { useCalc } from '../../../stores/calc/calcStore';
 import { useTDEECalculations } from '../../../hooks/useTDEECalculations';
+
+type CopyFromState = {
+    type: 'kcal' | 'kg';
+    value: number | '';
+    weekNumber: number;
+    dayIndex: number;
+} | null;
 
 interface DayCardProps {
     dayIndex: number;
@@ -25,6 +35,12 @@ interface DayCardProps {
     };
     isEditable: boolean;
     weeklyTarget: number; // The target for THIS specific week
+    copyFrom: CopyFromState;
+    onCopyCalories: (weekNumber: number, dayIndex: number, value: number | '') => void;
+    onPasteCalories: (weekNumber: number, dayIndex: number) => void;
+    onCopyWeight: (weekNumber: number, dayIndex: number, value: number | '') => void;
+    onPasteWeight: (weekNumber: number, dayIndex: number) => void;
+    onCancelCopy: () => void;
 }
 
 const DayCard: React.FC<DayCardProps> = ({ 
@@ -34,6 +50,12 @@ const DayCard: React.FC<DayCardProps> = ({
     day, 
     isEditable,
     weeklyTarget,
+    copyFrom,
+    onCopyCalories,
+    onPasteCalories,
+    onCopyWeight,
+    onPasteWeight,
+    onCancelCopy,
 }) => {
     const { updateDay } = useCalc();
     const { isWeightLoss } = useTDEECalculations();
@@ -119,6 +141,45 @@ const DayCard: React.FC<DayCardProps> = ({
         const value = e.target.value;
         updateDay({ type, dayIndex, weekNumber, value: value === '' ? '' : Number(value) });
     };
+
+    const handleKcalStep = (delta: number) => {
+        if (!isEditable) return;
+        const current = day.kcal === '' ? 0 : Number(day.kcal);
+        const next = Math.max(0, current + delta);
+        updateDay({ type: 'kcal', dayIndex, weekNumber, value: next });
+    };
+    const handleWeightStep = (delta: number) => {
+        if (!isEditable) return;
+        const current = day.kg === '' ? 0 : Number(day.kg);
+        const next = Math.max(0, Math.round((current + delta) * 10) / 10);
+        updateDay({ type: 'kg', dayIndex, weekNumber, value: next });
+    };
+
+    const isCalorieSource = copyFrom?.type === 'kcal' && copyFrom.weekNumber === weekNumber && copyFrom.dayIndex === dayIndex;
+    const isWeightSource = copyFrom?.type === 'kg' && copyFrom.weekNumber === weekNumber && copyFrom.dayIndex === dayIndex;
+    const showPasteCalories = copyFrom?.type === 'kcal' && !isCalorieSource;
+    const showPasteWeight = copyFrom?.type === 'kg' && !isWeightSource;
+
+    const handleCalorieIconClick = () => {
+        if (!isEditable) return;
+        if (showPasteCalories) {
+            onPasteCalories(weekNumber, dayIndex);
+        } else if (isCalorieSource) {
+            onCancelCopy();
+        } else if (day.kcal !== '') {
+            onCopyCalories(weekNumber, dayIndex, day.kcal);
+        }
+    };
+    const handleWeightIconClick = () => {
+        if (!isEditable) return;
+        if (showPasteWeight) {
+            onPasteWeight(weekNumber, dayIndex);
+        } else if (isWeightSource) {
+            onCancelCopy();
+        } else if (day.kg !== '') {
+            onCopyWeight(weekNumber, dayIndex, day.kg);
+        }
+    };
     
     // Get status badge
     const getStatusBadge = () => {
@@ -148,48 +209,71 @@ const DayCard: React.FC<DayCardProps> = ({
     
     return (
         <Box
-            p={4}
+            w="140px"
+            maxW="140px"
+            mx="auto"
+            h="285px"
+            minH="285px"
+            maxH="285px"
+            p={2}
             bg={cardStyle.bg}
             border={`${cardStyle.borderWidth} solid`}
             borderColor={cardStyle.borderColor}
             borderRadius="xl"
             shadow="sm"
-            _hover={isEditable ? { 
-                shadow: 'md',
-                transform: 'translateY(-2px)',
-            } : {}}
+            _hover={isEditable ? { shadow: 'md' } : {}}
             transition="all 0.2s"
             opacity={isFuture ? 0.7 : 1}
+            display="flex"
+            flexDirection="column"
+            overflow="hidden"
         >
-            {/* Day header */}
-            <VStack spacing={1} mb={4}>
-                <Text 
-                    fontSize="xs" 
-                    fontWeight="bold" 
-                    color="gray.500"
-                    textTransform="uppercase"
-                    letterSpacing="wide"
-                >
+            {/* Day header - fixed height */}
+            <VStack spacing={2} mb={2} flexShrink={0} minH="60px" align="center">
+                <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="wide">
                     {format(dayDate, 'EEE')}
                 </Text>
-                <Text 
-                    fontSize="lg" 
-                    fontWeight="bold" 
-                    color={config.black}
-                >
+                <Text fontSize="sm" fontWeight="bold" color={config.black}>
                     {format(dayDate, 'MMM d')}
                 </Text>
-                {getStatusBadge()}
+                <Box minH="18px" mt={1} display="flex" alignItems="center" justifyContent="center">
+                    {getStatusBadge()}
+                </Box>
             </VStack>
-            
-            {/* Input fields */}
-            <VStack spacing={3}>
-                {/* Calories input */}
+
+            {/* Input fields - centered in middle */}
+            <VStack spacing={4} flex={1} minH={0} justify="center">
                 <Box w="100%">
-                    <Text fontSize="xs" color="gray.500" mb={1}>Calories</Text>
+                    <Text fontSize="xs" color="gray.500" mb={0} lineHeight="1">Calories</Text>
                     <InputGroup size="sm">
-                        <InputLeftAddon bg={config.test2} borderColor="gray.200">
-                            <Utensils size={14} color={config.test4} />
+                        <InputLeftAddon bg={config.test2} borderColor="gray.200" minW="28px" h="30px" alignItems="center" justifyContent="center">
+                            <Tooltip
+                                label={
+                                    showPasteCalories ? 'Paste calories here' :
+                                    isCalorieSource ? 'Cancel copy' :
+                                    day.kcal !== '' ? 'Copy calories to other days' : 'Enter a value to copy'
+                                }
+                                fontSize="xs"
+                                placement="top"
+                            >
+                                <Box
+                                    as="button"
+                                    type="button"
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    cursor={isEditable ? 'pointer' : 'default'}
+                                    _hover={isEditable ? { opacity: 0.8 } : undefined}
+                                    onClick={handleCalorieIconClick}
+                                    aria-label={showPasteCalories ? 'Paste calories' : isCalorieSource ? 'Cancel copy' : day.kcal !== '' ? 'Copy calories' : 'Enter a value to copy'}
+                                >
+                                    {showPasteCalories ? (
+                                        <ClipboardPaste size={14} color={config.test4} />
+                                    ) : (
+                                        <Utensils size={14} color={config.test4} />
+                                    )}
+                                </Box>
+                            </Tooltip>
                         </InputLeftAddon>
                         <Input
                             type="number"
@@ -204,16 +288,64 @@ const DayCard: React.FC<DayCardProps> = ({
                             textAlign="center"
                             fontWeight="semibold"
                             cursor={!isEditable ? 'not-allowed' : 'text'}
+                            fontSize="xs"
+                            h="30px"
                         />
+                        <InputRightAddon p={0} h="30px" w="20px" bg={config.test2} borderColor="gray.200" display="flex" flexDirection="column">
+                            <IconButton
+                                aria-label="Increase calories"
+                                icon={<ChevronUp size={12} />}
+                                size="xs"
+                                variant="ghost"
+                                minW="20px"
+                                h="15px"
+                                isDisabled={!isEditable}
+                                onClick={() => handleKcalStep(10)}
+                            />
+                            <IconButton
+                                aria-label="Decrease calories"
+                                icon={<ChevronDown size={12} />}
+                                size="xs"
+                                variant="ghost"
+                                minW="20px"
+                                h="15px"
+                                isDisabled={!isEditable}
+                                onClick={() => handleKcalStep(-10)}
+                            />
+                        </InputRightAddon>
                     </InputGroup>
                 </Box>
-                
-                {/* Weight input */}
                 <Box w="100%">
-                    <Text fontSize="xs" color="gray.500" mb={1}>Weight</Text>
+                    <Text fontSize="xs" color="gray.500" mb={0} lineHeight="1">Weight</Text>
                     <InputGroup size="sm">
-                        <InputLeftAddon bg={config.test2} borderColor="gray.200">
-                            <Scale size={14} color={config.test4} />
+                        <InputLeftAddon bg={config.test2} borderColor="gray.200" minW="28px" h="30px" alignItems="center" justifyContent="center">
+                            <Tooltip
+                                label={
+                                    showPasteWeight ? 'Paste weight here' :
+                                    isWeightSource ? 'Cancel copy' :
+                                    day.kg !== '' ? 'Copy weight to other days' : 'Enter a value to copy'
+                                }
+                                fontSize="xs"
+                                placement="top"
+                            >
+                                <Box
+                                    as="button"
+                                    type="button"
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    cursor={isEditable ? 'pointer' : 'default'}
+                                    _hover={isEditable ? { opacity: 0.8 } : undefined}
+                                    onClick={handleWeightIconClick}
+                                    aria-label={showPasteWeight ? 'Paste weight' : isWeightSource ? 'Cancel copy' : day.kg !== '' ? 'Copy weight' : 'Enter a value to copy'}
+                                >
+                                    {showPasteWeight ? (
+                                        <ClipboardPaste size={14} color={config.test4} />
+                                    ) : (
+                                        <Scale size={14} color={config.test4} />
+                                    )}
+                                </Box>
+                            </Tooltip>
                         </InputLeftAddon>
                         <Input
                             type="number"
@@ -229,19 +361,41 @@ const DayCard: React.FC<DayCardProps> = ({
                             textAlign="center"
                             fontWeight="semibold"
                             cursor={!isEditable ? 'not-allowed' : 'text'}
+                            fontSize="xs"
+                            h="30px"
                         />
+                        <InputRightAddon p={0} h="30px" w="20px" bg={config.test2} borderColor="gray.200" display="flex" flexDirection="column">
+                            <IconButton
+                                aria-label="Increase weight"
+                                icon={<ChevronUp size={12} />}
+                                size="xs"
+                                variant="ghost"
+                                minW="20px"
+                                h="15px"
+                                isDisabled={!isEditable}
+                                onClick={() => handleWeightStep(0.1)}
+                            />
+                            <IconButton
+                                aria-label="Decrease weight"
+                                icon={<ChevronDown size={12} />}
+                                size="xs"
+                                variant="ghost"
+                                minW="20px"
+                                h="15px"
+                                isDisabled={!isEditable}
+                                onClick={() => handleWeightStep(-0.1)}
+                            />
+                        </InputRightAddon>
                     </InputGroup>
                 </Box>
             </VStack>
-            
-            {/* Target indicator */}
-            {weeklyTarget > 0 && !isFuture && (
-                <Flex justify="center" mt={3} pt={2} borderTop="1px dashed" borderColor="gray.200">
-                    <Text fontSize="xs" color="gray.400">
-                        Target: {weeklyTarget.toLocaleString()}
-                    </Text>
-                </Flex>
-            )}
+
+            {/* Target - always same row for alignment */}
+            <Flex justify="center" pt={2} mt="auto" flexShrink={0} borderTop="1px dashed" borderColor="gray.200" minH="28px" align="center">
+                <Text fontSize="xs" color="gray.400">
+                    Target: {weeklyTarget > 0 && !isFuture ? weeklyTarget.toLocaleString() : '—'}
+                </Text>
+            </Flex>
         </Box>
     );
 };

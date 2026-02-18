@@ -67,7 +67,7 @@ const WeekSelector: React.FC<WeekSelectorProps> = ({ startDate }) => {
                                 borderRadius="md"
                                 cursor="pointer"
                                 onClick={() => selectWeek(week.week)}
-                                _hover={{ bg: 'gray.200', transform: 'scale(1.05)' }}
+                                _hover={{ bg: 'gray.200' }}
                                 transition="all 0.2s"
                                 minW="60px"
                                 textAlign="center"
@@ -150,7 +150,7 @@ const WeekSelector: React.FC<WeekSelectorProps> = ({ startDate }) => {
                                 borderRadius="md"
                                 cursor="pointer"
                                 onClick={() => selectWeek(week.week)}
-                                _hover={{ bg: 'gray.200', transform: 'scale(1.05)' }}
+                                _hover={{ bg: 'gray.200' }}
                                 transition="all 0.2s"
                                 minW="60px"
                                 textAlign="center"

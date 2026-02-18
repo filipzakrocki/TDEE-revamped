@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Box, Flex, Spinner, Center, Slide, useBreakpointValue } from '@chakra-ui/react';
 import { useAuth } from './stores/auth/authStore';
 import { config } from './config';
@@ -21,6 +21,12 @@ const MOBILE_BREAKPOINT = config.mobileBreakpoint;
 const PrivateLayout = (): JSX.Element => {
   const { isAuthenticated } = useAuth();
   const isMobile = useBreakpointValue({ base: true, [MOBILE_BREAKPOINT]: false }) ?? true;
+  const [enableSidenavTransition, setEnableSidenavTransition] = useState(false);
+
+  useEffect(() => {
+    const id = setTimeout(() => setEnableSidenavTransition(true), 100);
+    return () => clearTimeout(id);
+  }, []);
 
   if (!isAuthenticated) return <Navigate to="/" replace />;
 
@@ -33,7 +39,7 @@ const PrivateLayout = (): JSX.Element => {
             h="100%"
             overflow="hidden"
             w={isMobile ? 0 : config.sidenavWidth}
-            transition="width 0.3s ease"
+            transition={enableSidenavTransition ? 'width 0.3s ease' : 'none'}
             sx={{ minWidth: isMobile ? 0 : undefined }}
           >
             <Box w={config.sidenavWidth} h="100%" color={config.black}>
@@ -46,8 +52,8 @@ const PrivateLayout = (): JSX.Element => {
             flex={1}
             minW={0}
             h="100%"
-          pt={{ base: 2, [MOBILE_BREAKPOINT]: config.padding }}
-          pb={config.padding}
+            pt={{ base: 2, [MOBILE_BREAKPOINT]: config.padding }}
+            pb={config.padding}
             px={{ base: config.layoutGutter, [MOBILE_BREAKPOINT]: 0 }}
             color={config.black}
             display="flex"

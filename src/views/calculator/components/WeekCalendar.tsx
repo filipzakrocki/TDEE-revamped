@@ -4,6 +4,7 @@ import {
     Flex,
     Text,
     IconButton,
+    Button,
     HStack,
     VStack,
     Grid,
@@ -23,8 +24,9 @@ import {
     isSameDay,
     addMonths,
     subMonths,
-    isBefore,
+    getDay,
 } from 'date-fns';
+import type { Day } from 'date-fns';
 import { config } from '../../../config';
 import { useCalc } from '../../../stores/calc/calcStore';
 import { useTDEECalculations } from '../../../hooks/useTDEECalculations';
@@ -34,7 +36,8 @@ interface WeekCalendarProps {
 }
 
 const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
-    const { weekData, selectedWeek, selectWeek } = useCalc();
+    const { weekData, selectedWeek, selectWeek, calendarWeekStartsOnMonday, toggleCalendarWeekStart, isMetricSystem } = useCalc();
+    const weightUnit = isMetricSystem ? 'kg' : 'lbs';
     const { isWeightLoss, weekCalculations } = useTDEECalculations();
     
     const displayWeeks = weekData.filter(w => w.week >= 1);
@@ -51,12 +54,22 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
     };
     
     const selectedWeekStart = getWeekStartDate(selectedWeek);
-    const [viewMonth, setViewMonth] = React.useState<Date>(selectedWeekStart);
-    
-    // Update view month when selected week changes
+    const [viewMonth, setViewMonth] = React.useState<Date>(() => getWeekStartDate(selectedWeek));
+
+    const dietStartDate = startDate ? parseISO(startDate) : new Date();
+    const weekStartsMonday = calendarWeekStartsOnMonday ?? true;
+    const weekStartsOn: Day = weekStartsMonday ? 1 : (getDay(dietStartDate) as Day);
+    const dayNames = weekStartsMonday
+        ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        : (() => {
+            const names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            return [...names.slice(weekStartsOn), ...names.slice(0, weekStartsOn)];
+        })();
+
+    // Update view month only when user selects a different week (e.g. by clicking a day)
     React.useEffect(() => {
-        setViewMonth(selectedWeekStart);
-    }, [selectedWeek, selectedWeekStart]);
+        setViewMonth(getWeekStartDate(selectedWeek));
+    }, [selectedWeek, startDate]);
     
     // Build a map of weekNumber -> weeklyTarget for quick lookup
     const weekTargetMap = useMemo(() => {
@@ -132,8 +145,8 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
     const calendarWeeks = useMemo(() => {
         const monthStart = startOfMonth(viewMonth);
         const monthEnd = endOfMonth(viewMonth);
-        const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday start
-        const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+        const calendarStart = startOfWeek(monthStart, { weekStartsOn });
+        const calendarEnd = endOfWeek(monthEnd, { weekStartsOn });
         
         const weeks: Date[][] = [];
         let day = calendarStart;
@@ -148,24 +161,13 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
         }
         
         return weeks;
-    }, [viewMonth]);
+    }, [viewMonth, weekStartsOn]);
     
-    // Check if a week contains any selected week days
-    const isWeekSelected = (weekDays: Date[]): boolean => {
-        return weekDays.some(date => {
-            const dateKey = format(date, 'yyyy-MM-dd');
-            const dayInfo = dateDataMap.get(dateKey);
-            return dayInfo?.weekNumber === selectedWeek;
-        });
-    };
-    
-    // Get the diet start date's month
-    const dietStartDate = startDate ? parseISO(startDate) : new Date();
     const dietStartMonth = startOfMonth(dietStartDate);
-    
-    // Check if we can go to the previous month
-    const canGoPreviousMonth = !isBefore(startOfMonth(subMonths(viewMonth, 1)), dietStartMonth) && 
-                                !isSameMonth(viewMonth, dietStartMonth);
+    const prevMonthStart = startOfMonth(subMonths(viewMonth, 1));
+
+    // Can go to previous month if it's not before the diet start month
+    const canGoPreviousMonth = prevMonthStart.getTime() >= dietStartMonth.getTime();
     
     const handlePreviousMonth = () => {
         if (canGoPreviousMonth) {
@@ -176,33 +178,49 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
     const handleNextMonth = () => {
         setViewMonth(prev => addMonths(prev, 1));
     };
-    
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
     
     return (
         <Box bg="white" borderRadius="xl" p={4} shadow="sm" borderWidth="1px" borderColor="gray.100">
             {/* Header with month navigation */}
             <Flex justify="space-between" align="center" mb={4}>
-                <IconButton
-                    icon={<ChevronLeft size={20} />}
-                    aria-label="Previous month"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handlePreviousMonth}
-                    isDisabled={!canGoPreviousMonth}
-                />
-                
-                <Text fontSize="lg" fontWeight="bold" color={config.black}>
-                    {format(viewMonth, 'MMMM yyyy')}
-                </Text>
-                
-                <IconButton
-                    icon={<ChevronRight size={20} />}
-                    aria-label="Next month"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleNextMonth}
-                />
+                <Box flex={1} />
+                <Flex flex={1} justify="center" align="center" gap={2}>
+                    <IconButton
+                        icon={<ChevronLeft size={20} />}
+                        aria-label="Previous month"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handlePreviousMonth}
+                        isDisabled={!canGoPreviousMonth}
+                    />
+                    <Text fontSize="lg" fontWeight="bold" color={config.black} minW="140px" textAlign="center">
+                        {format(viewMonth, 'MMMM yyyy')}
+                    </Text>
+                    <IconButton
+                        icon={<ChevronRight size={20} />}
+                        aria-label="Next month"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleNextMonth}
+                    />
+                </Flex>
+                <Flex flex={1} justify="flex-end">
+                    <Tooltip
+                        label={weekStartsMonday ? `Switch to diet week start (${format(dietStartDate, 'EEEE')})` : 'Switch to Monday start'}
+                        placement="left"
+                    >
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            colorScheme="gray"
+                            onClick={toggleCalendarWeekStart}
+                            fontSize="xs"
+                        >
+                            {weekStartsMonday ? 'Mon' : format(dietStartDate, 'EEE')}
+                        </Button>
+                    </Tooltip>
+                </Flex>
             </Flex>
             
             {/* Calendar header */}
@@ -225,16 +243,10 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
             
             {/* Calendar weeks */}
             <VStack spacing={1}>
-                {calendarWeeks.map((week, weekIndex) => {
-                    const weekSelected = isWeekSelected(week);
-                    
-                    return (
+                {calendarWeeks.map((week, weekIndex) => (
                         <Box
                             key={`week-${weekIndex}`}
                             w="100%"
-                            bg={weekSelected ? config.backgroundNav : 'transparent'}
-                            borderRadius="lg"
-                            p={weekSelected ? 1 : 0}
                             transition="all 0.2s"
                         >
                             <Grid templateColumns="repeat(7, 1fr)" gap={1}>
@@ -243,7 +255,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                                     const isCurrentMonth = isSameMonth(date, viewMonth);
                                     
                                     // Determine background color
-                                    let bgColor = weekSelected ? 'white' : 'transparent';
+                                    let bgColor = 'transparent';
                                     let borderColor = 'transparent';
                                     let textColor = isCurrentMonth ? config.black : 'gray.300';
                                     let cursor = 'default';
@@ -260,10 +272,10 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                                         } else if (status.isPast && !status.hasData) {
                                             bgColor = config.orange;
                                         } else if (status.isFuture) {
-                                            bgColor = weekSelected ? 'white' : 'gray.100';
+                                            bgColor = 'gray.100';
                                             textColor = 'gray.400';
                                         } else if (!status.hasData) {
-                                            bgColor = weekSelected ? 'white' : 'gray.50';
+                                            bgColor = 'gray.50';
                                         }
                                     }
                                     
@@ -271,11 +283,11 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                                         borderColor = config.test5;
                                     }
                                     
-                                    const tooltipLabel = status.hasKcal 
-                                        ? `${status.dayInfo?.data.kcal} kcal${status.hitTarget ? ' ✓' : ' ✗'}`
-                                        : status.isPast && status.isInRange
-                                            ? 'No data entered'
-                                            : '';
+                                    const tooltipKcal = status.dayInfo && status.dayInfo.data.kcal !== '' && status.dayInfo.data.kcal !== 0 ? String(status.dayInfo.data.kcal) : '—';
+                                    const tooltipKg = status.dayInfo && status.dayInfo.data.kg !== '' && status.dayInfo.data.kg !== 0 ? String(status.dayInfo.data.kg) : '—';
+                                    const tooltipLabel = status.isInRange
+                                        ? `${tooltipKcal} kcal • ${tooltipKg} ${weightUnit}${status.hasKcal ? (status.hitTarget ? ' ✓' : ' ✗') : ''}`
+                                        : '';
                                     
                                     return (
                                         <GridItem key={`day-${weekIndex}-${dayIndex}`}>
@@ -299,23 +311,22 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                                                     flexDirection="column"
                                                     justifyContent="center"
                                                     alignItems="center"
-                                                    onClick={() => status.isInRange && handleDayClick(date)}
+                                                    onClick={() => status.isInRange && isCurrentMonth && handleDayClick(date)}
                                                     _hover={status.isInRange && isCurrentMonth ? {
-                                                        transform: 'scale(1.05)',
                                                         shadow: 'sm',
                                                     } : {}}
                                                     opacity={isCurrentMonth ? 1 : 0.4}
                                                 >
-                                                    <Text 
-                                                        fontSize="sm" 
+                                                    <Text
+                                                        fontSize="sm"
                                                         fontWeight={status.isToday ? 'bold' : 'medium'}
                                                         color={textColor}
                                                     >
                                                         {format(date, 'd')}
                                                     </Text>
-                                                    {status.hasKcal && (
+                                                    {status.isInRange && status.hasData && (
                                                         <Text fontSize="9px" color="gray.600" lineHeight="1">
-                                                            {status.dayInfo?.data.kcal}
+                                                            {(status.dayInfo?.data.kcal !== '' && status.dayInfo?.data.kcal !== 0 ? status.dayInfo?.data.kcal : '—')} kcal • {(status.dayInfo?.data.kg !== '' && status.dayInfo?.data.kg !== 0 ? status.dayInfo?.data.kg : '—')} {weightUnit}
                                                         </Text>
                                                     )}
                                                 </Box>
@@ -325,8 +336,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                                 })}
                             </Grid>
                         </Box>
-                    );
-                })}
+                ))}
             </VStack>
             
             {/* Legend */}
@@ -346,10 +356,6 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                 <HStack spacing={1}>
                     <Box w={3} h={3} borderRadius="sm" border="2px solid" borderColor={config.test5} bg="white" />
                     <Text fontSize="xs" color="gray.500">Today</Text>
-                </HStack>
-                <HStack spacing={1}>
-                    <Box w={3} h={3} borderRadius="sm" bg={config.backgroundNav} boxShadow="inset 0 0 0 1px rgba(0,0,0,0.1)" />
-                    <Text fontSize="xs" color="gray.500">Selected week</Text>
                 </HStack>
             </Flex>
         </Box>
