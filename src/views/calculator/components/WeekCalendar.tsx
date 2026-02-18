@@ -183,7 +183,22 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
         <Box bg="white" borderRadius="xl" p={4} shadow="sm" borderWidth="1px" borderColor="gray.100">
             {/* Header with month navigation */}
             <Flex justify="space-between" align="center" mb={4}>
-                <Box flex={1} />
+                <Flex flex={1} justify="flex-start">
+                    <Tooltip
+                        label={weekStartsMonday ? `Switch to diet week start (${format(dietStartDate, 'EEEE')})` : 'Switch to Monday start'}
+                        placement="right"
+                    >
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            colorScheme="gray"
+                            onClick={toggleCalendarWeekStart}
+                            fontSize="xs"
+                        >
+                            {weekStartsMonday ? 'Mon Start' : 'Diet Start'}
+                        </Button>
+                    </Tooltip>
+                </Flex>
                 <Flex flex={1} justify="center" align="center" gap={2}>
                     <IconButton
                         icon={<ChevronLeft size={20} />}
@@ -204,22 +219,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                         onClick={handleNextMonth}
                     />
                 </Flex>
-                <Flex flex={1} justify="flex-end">
-                    <Tooltip
-                        label={weekStartsMonday ? `Switch to diet week start (${format(dietStartDate, 'EEEE')})` : 'Switch to Monday start'}
-                        placement="left"
-                    >
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            colorScheme="gray"
-                            onClick={toggleCalendarWeekStart}
-                            fontSize="xs"
-                        >
-                            {weekStartsMonday ? 'Mon' : format(dietStartDate, 'EEE')}
-                        </Button>
-                    </Tooltip>
-                </Flex>
+                <Box flex={1} />
             </Flex>
             
             {/* Calendar header */}
