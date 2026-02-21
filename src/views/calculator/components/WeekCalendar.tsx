@@ -10,6 +10,14 @@ import {
     Grid,
     GridItem,
     Tooltip,
+    useBreakpointValue,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogContent,
+    AlertDialogOverlay,
+    useDisclosure,
 } from '@chakra-ui/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { 
@@ -20,11 +28,14 @@ import {
     endOfMonth, 
     startOfWeek, 
     endOfWeek,
+    startOfYear,
+    endOfYear,
     isSameMonth,
     isSameDay,
     addMonths,
     subMonths,
     getDay,
+    getYear,
 } from 'date-fns';
 import type { Day } from 'date-fns';
 import { config } from '../../../config';
@@ -33,10 +44,15 @@ import { useTDEECalculations } from '../../../hooks/useTDEECalculations';
 
 interface WeekCalendarProps {
     startDate: string;
+    onClose?: () => void;
 }
 
-const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
-    const { weekData, selectedWeek, selectWeek, calendarWeekStartsOnMonday, toggleCalendarWeekStart, isMetricSystem } = useCalc();
+const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
+    const isMobile = useBreakpointValue({ base: true, md: false }) ?? true;
+    const { weekData, selectedWeek, selectWeek, addWeeksUntil, calendarWeekStartsOnMonday, toggleCalendarWeekStart, isMetricSystem } = useCalc();
+    const [dateToAddUntil, setDateToAddUntil] = React.useState<Date | null>(null);
+    const { isOpen: isAddWeeksOpen, onOpen: onAddWeeksOpen, onClose: onAddWeeksClose } = useDisclosure();
+    const cancelRef = React.useRef<HTMLButtonElement>(null);
     const weightUnit = isMetricSystem ? 'kg' : 'lbs';
     const { isWeightLoss, weekCalculations } = useTDEECalculations();
     
@@ -54,8 +70,10 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
     }, [startDate]);
 
     const [viewMonth, setViewMonth] = React.useState<Date>(() => getWeekStartDate(selectedWeek));
+    const [viewMode, setViewMode] = React.useState<'month' | 'year'>('month');
+    const viewYear = getYear(viewMonth);
 
-    const dietStartDate = startDate ? parseISO(startDate) : new Date();
+    const dietStartDate = useMemo(() => startDate ? parseISO(startDate) : new Date(), [startDate]);
     const weekStartsMonday = calendarWeekStartsOnMonday ?? true;
     const weekStartsOn: Day = weekStartsMonday ? 1 : (getDay(dietStartDate) as Day);
     const dayNames = weekStartsMonday
@@ -131,15 +149,46 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
         return { isToday, isPast, isFuture, isInRange, hasData, hasKcal, hitTarget, dayInfo };
     };
     
-    // Navigate to week when clicking a day
-    const handleDayClick = (date: Date) => {
-        const dateKey = format(date, 'yyyy-MM-dd');
-        const dayInfo = dateDataMap.get(dateKey);
-        if (dayInfo) {
-            selectWeek(dayInfo.weekNumber);
+    // Last day currently in range (for "add weeks until" only)
+    const lastDayInRange = useMemo(() => {
+        if (!startDate || displayWeeks.length === 0) return null;
+        const lastWeek = displayWeeks[displayWeeks.length - 1];
+        return addDays(parseISO(startDate), (lastWeek.week - 1) * 7 + 6);
+    }, [startDate, displayWeeks]);
+
+    const canExtendTo = useCallback((date: Date) => {
+        if (!dietStartDate || date < dietStartDate) return false;
+        if (!lastDayInRange) return true;
+        return date > lastDayInRange;
+    }, [dietStartDate, lastDayInRange]);
+
+    const handleCellClick = useCallback((date: Date, isInRange: boolean, isCurrentView: boolean) => {
+        if (!isCurrentView) return;
+        if (isInRange) {
+            const dayInfo = dateDataMap.get(format(date, 'yyyy-MM-dd'));
+            if (dayInfo) {
+                selectWeek(dayInfo.weekNumber);
+                onClose?.();
+            }
+        } else if (canExtendTo(date)) {
+            setDateToAddUntil(date);
+            onAddWeeksOpen();
         }
-    };
-    
+    }, [dateDataMap, selectWeek, onClose, canExtendTo, onAddWeeksOpen]);
+
+    const handleConfirmAddWeeks = useCallback(() => {
+        if (!dateToAddUntil) return;
+        addWeeksUntil(format(dateToAddUntil, 'yyyy-MM-dd'));
+        setDateToAddUntil(null);
+        onAddWeeksClose();
+        onClose?.();
+    }, [dateToAddUntil, addWeeksUntil, onAddWeeksClose, onClose]);
+
+    const handleCancelAddWeeks = useCallback(() => {
+        setDateToAddUntil(null);
+        onAddWeeksClose();
+    }, [onAddWeeksClose]);
+
     // Generate calendar weeks for the month view
     const calendarWeeks = useMemo(() => {
         const monthStart = startOfMonth(viewMonth);
@@ -161,6 +210,25 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
         
         return weeks;
     }, [viewMonth, weekStartsOn]);
+
+    // Generate all weeks for the year view (same week start as month view)
+    const yearCalendarWeeks = useMemo(() => {
+        const yearStart = startOfYear(new Date(viewYear, 0));
+        const yearEnd = endOfYear(new Date(viewYear, 11));
+        const calendarStart = startOfWeek(yearStart, { weekStartsOn });
+        const calendarEnd = endOfWeek(yearEnd, { weekStartsOn });
+        const weeks: Date[][] = [];
+        let day = calendarStart;
+        while (day <= calendarEnd) {
+            const week: Date[] = [];
+            for (let i = 0; i < 7; i++) {
+                week.push(day);
+                day = addDays(day, 1);
+            }
+            weeks.push(week);
+        }
+        return weeks;
+    }, [viewYear, weekStartsOn]);
     
     const dietStartMonth = startOfMonth(dietStartDate);
     const prevMonthStart = startOfMonth(subMonths(viewMonth, 1));
@@ -180,48 +248,125 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
 
     
     return (
-        <Box bg="white" borderRadius="xl" p={4} shadow="sm" borderWidth="1px" borderColor="gray.100">
-            {/* Header with month navigation */}
+        <Box bg="white" borderRadius="xl" p={4} borderWidth="1px" borderColor="gray.100">
+            {/* Header: left = Mon/Diet Start, center = selector, right = Month/Year toggle */}
             <Flex justify="space-between" align="center" mb={4}>
                 <Flex flex={1} justify="flex-start">
-                    <Tooltip
-                        label={weekStartsMonday ? `Switch to diet week start (${format(dietStartDate, 'EEEE')})` : 'Switch to Monday start'}
-                        placement="right"
-                    >
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            colorScheme="gray"
-                            onClick={toggleCalendarWeekStart}
-                            fontSize="xs"
-                        >
+                    <Tooltip label={weekStartsMonday ? `Switch to diet week start (${format(dietStartDate, 'EEEE')})` : 'Switch to Monday start'} placement="right">
+                        <Button size="sm" variant="ghost" colorScheme="gray" bg="gray.100" onClick={toggleCalendarWeekStart} fontSize="xs">
                             {weekStartsMonday ? 'Mon Start' : 'Diet Start'}
                         </Button>
                     </Tooltip>
                 </Flex>
                 <Flex flex={1} justify="center" align="center" gap={2}>
-                    <IconButton
-                        icon={<ChevronLeft size={20} />}
-                        aria-label="Previous month"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handlePreviousMonth}
-                        isDisabled={!canGoPreviousMonth}
-                    />
-                    <Text fontSize="lg" fontWeight="bold" color={config.black} minW="140px" textAlign="center">
-                        {format(viewMonth, 'MMMM yyyy')}
-                    </Text>
-                    <IconButton
-                        icon={<ChevronRight size={20} />}
-                        aria-label="Next month"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleNextMonth}
-                    />
+                    {viewMode === 'month' ? (
+                        <>
+                            <IconButton icon={<ChevronLeft size={20} />} aria-label="Previous month" variant="ghost" size="sm" onClick={handlePreviousMonth} isDisabled={!canGoPreviousMonth} />
+                            <Text fontSize="lg" fontWeight="bold" color={config.black} minW="140px" textAlign="center">
+                                {format(viewMonth, 'MMMM yyyy')}
+                            </Text>
+                            <IconButton icon={<ChevronRight size={20} />} aria-label="Next month" variant="ghost" size="sm" onClick={handleNextMonth} />
+                        </>
+                    ) : (
+                        <>
+                            <IconButton icon={<ChevronLeft size={20} />} aria-label="Previous year" variant="ghost" size="sm" onClick={() => setViewMonth(prev => subMonths(prev, 12))} />
+                            <Text fontSize="lg" fontWeight="bold" color={config.black} minW="80px" textAlign="center">
+                                {viewYear}
+                            </Text>
+                            <IconButton icon={<ChevronRight size={20} />} aria-label="Next year" variant="ghost" size="sm" onClick={() => setViewMonth(prev => addMonths(prev, 12))} />
+                        </>
+                    )}
                 </Flex>
-                <Box flex={1} />
+                <Flex flex={1} justify="flex-end">
+                    <Tooltip label={viewMode === 'month' ? 'Switch to yearly view' : 'Switch to monthly view'} placement="left">
+                        <Button size="sm" variant="ghost" colorScheme="gray" bg="gray.100" onClick={() => setViewMode(m => m === 'month' ? 'year' : 'month')} fontSize="xs">
+                            {viewMode === 'month' ? 'Monthly' : 'Yearly'}
+                        </Button>
+                    </Tooltip>
+                </Flex>
             </Flex>
-            
+
+            {viewMode === 'year' ? (
+                <>
+                    <Grid templateColumns="repeat(7, 1fr)" gap={0.5} mb={1}>
+                        {dayNames.map((day, i) => (
+                            <GridItem key={`y-header-${i}`}>
+                                <Text fontSize="xs" fontWeight="bold" color="gray.500" textAlign="center" textTransform="uppercase" py={1}>
+                                    {day}
+                                </Text>
+                            </GridItem>
+                        ))}
+                    </Grid>
+                    <VStack spacing={0.5} align="stretch">
+                        {yearCalendarWeeks.map((week, weekIndex) => (
+                            <Grid key={`y-week-${weekIndex}`} templateColumns="repeat(7, 1fr)" gap={0.5}>
+                                {week.map((date, dayIndex) => {
+                                    const status = getDayStatus(date);
+                                    const isCurrentYear = getYear(date) === viewYear;
+                                    let bgColor = 'transparent';
+                                    let borderColor = 'transparent';
+                                    let textColor = isCurrentYear ? config.black : 'gray.300';
+                                    let cursor = 'default';
+                                    const extendable = canExtendTo(date);
+                                    if (status.isInRange && isCurrentYear) {
+                                        cursor = 'pointer';
+                                        if (status.hasKcal) {
+                                            bgColor = status.hitTarget ? config.green : config.red;
+                                        } else if (status.isPast && !status.hasData) {
+                                            bgColor = config.orange;
+                                        } else if (status.isFuture) {
+                                            bgColor = 'gray.100';
+                                            textColor = 'gray.400';
+                                        } else if (!status.hasData) {
+                                            bgColor = 'gray.50';
+                                        }
+                                    } else if (extendable && isCurrentYear) {
+                                        cursor = 'pointer';
+                                    }
+                                    if (status.isToday) borderColor = config.test5;
+                                    const tooltipLabel = status.isInRange
+                                        ? `${format(date, 'MMM d')}${status.dayInfo ? ` • ${status.dayInfo.data.kcal !== '' && status.dayInfo.data.kcal !== 0 ? status.dayInfo.data.kcal : '—'} kcal • ${status.dayInfo.data.kg !== '' && status.dayInfo.data.kg !== 0 ? status.dayInfo.data.kg : '—'} ${weightUnit}` : ''}`
+                                        : '';
+                                    const kcalVal = status.dayInfo && status.dayInfo.data.kcal !== '' && status.dayInfo.data.kcal !== 0 ? String(status.dayInfo.data.kcal) : '—';
+                                    const kgVal = status.dayInfo && status.dayInfo.data.kg !== '' && status.dayInfo.data.kg !== 0 ? String(status.dayInfo.data.kg) : '—';
+                                    return (
+                                        <GridItem key={`y-${weekIndex}-${dayIndex}`}>
+                                            <Tooltip label={tooltipLabel} fontSize="xs" isDisabled={!tooltipLabel} placement="top">
+                                                <Box
+                                                    bg={bgColor}
+                                                    border="1px solid"
+                                                    borderColor={borderColor}
+                                                    borderRadius="sm"
+                                                    p={1}
+                                                    textAlign="center"
+                                                    cursor={cursor}
+                                                    minH="56px"
+                                                    display="flex"
+                                                    flexDirection="column"
+                                                    alignItems="center"
+                                                    justifyContent="center"
+                                                    onClick={() => handleCellClick(date, status.isInRange, isCurrentYear)}
+                                                    _hover={(status.isInRange || extendable) && isCurrentYear ? { shadow: 'sm' } : {}}
+                                                    opacity={isCurrentYear ? 1 : 0.5}
+                                                >
+                                                    <Text fontSize="xs" fontWeight="medium" color={textColor}>
+                                                        {format(date, 'MMM d')}
+                                                    </Text>
+                                                    <VStack spacing={0} mt={0.5} lineHeight="1.2">
+                                                        <Text fontSize="xs" color="gray.600" opacity={kcalVal === '—' ? 0 : 1}>{kcalVal}</Text>
+                                                        <Text fontSize="xs" color="gray.600" opacity={kgVal === '—' ? 0 : 1}>{kgVal}</Text>
+                                                    </VStack>
+                                                </Box>
+                                            </Tooltip>
+                                        </GridItem>
+                                    );
+                                })}
+                            </Grid>
+                        ))}
+                    </VStack>
+                </>
+            ) : (
+                <>
             {/* Calendar header */}
             <Grid templateColumns="repeat(7, 1fr)" gap={1} mb={1}>
                 {dayNames.map((day, i) => (
@@ -258,6 +403,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                                     let borderColor = 'transparent';
                                     let textColor = isCurrentMonth ? config.black : 'gray.300';
                                     let cursor = 'default';
+                                    const extendableMonth = canExtendTo(date);
                                     
                                     if (status.isInRange && isCurrentMonth) {
                                         cursor = 'pointer';
@@ -276,6 +422,8 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                                         } else if (!status.hasData) {
                                             bgColor = 'gray.50';
                                         }
+                                    } else if (extendableMonth && isCurrentMonth) {
+                                        cursor = 'pointer';
                                     }
                                     
                                     if (status.isToday) {
@@ -288,6 +436,8 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                                         ? `${tooltipKcal} kcal • ${tooltipKg} ${weightUnit}${status.hasKcal ? (status.hitTarget ? ' ✓' : ' ✗') : ''}`
                                         : '';
                                     
+                                    const kcalVal = status.dayInfo && status.dayInfo.data.kcal !== '' && status.dayInfo.data.kcal !== 0 ? String(status.dayInfo.data.kcal) : '—';
+                                    const weightValMobile = status.dayInfo && status.dayInfo.data.kg !== '' && status.dayInfo.data.kg !== 0 ? String(status.dayInfo.data.kg) : '—';
                                     return (
                                         <GridItem key={`day-${weekIndex}-${dayIndex}`}>
                                             <Tooltip 
@@ -305,28 +455,33 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                                                     textAlign="center"
                                                     transition="all 0.2s"
                                                     cursor={cursor}
-                                                    minH="40px"
+                                                    minH={isMobile ? '52px' : '40px'}
+                                                    aspectRatio={isMobile ? '1' : undefined}
                                                     display="flex"
                                                     flexDirection="column"
                                                     justifyContent="center"
                                                     alignItems="center"
-                                                    onClick={() => status.isInRange && isCurrentMonth && handleDayClick(date)}
-                                                    _hover={status.isInRange && isCurrentMonth ? {
-                                                        shadow: 'sm',
-                                                    } : {}}
+                                                    onClick={() => handleCellClick(date, status.isInRange, isCurrentMonth)}
+                                                    _hover={(status.isInRange || extendableMonth) && isCurrentMonth ? { shadow: 'sm' } : {}}
                                                     opacity={isCurrentMonth ? 1 : 0.4}
                                                 >
-                                                    <Text
-                                                        fontSize="sm"
-                                                        fontWeight={status.isToday ? 'bold' : 'medium'}
-                                                        color={textColor}
-                                                    >
+                                                    <Text fontSize={isMobile ? 'xs' : 'sm'} fontWeight={status.isToday ? 'bold' : 'medium'} color={textColor}>
                                                         {format(date, 'd')}
                                                     </Text>
-                                                    {status.isInRange && status.hasData && (
-                                                        <Text fontSize="9px" color="gray.600" lineHeight="1">
-                                                            {(status.dayInfo?.data.kcal !== '' && status.dayInfo?.data.kcal !== 0 ? status.dayInfo?.data.kcal : '—')} kcal • {(status.dayInfo?.data.kg !== '' && status.dayInfo?.data.kg !== 0 ? status.dayInfo?.data.kg : '—')} {weightUnit}
-                                                        </Text>
+                                                    {status.isInRange && (
+                                                        isMobile ? (
+                                                            <VStack spacing={0} mt={0.5} lineHeight="1">
+                                                                <Text fontSize="9px" color="gray.600" opacity={kcalVal === '—' ? 0 : 1}>{kcalVal}</Text>
+                                                                <Text fontSize="9px" color="gray.600" opacity={weightValMobile === '—' ? 0 : 1}>{weightValMobile}</Text>
+                                                            </VStack>
+                                                        ) : (
+                                                            status.hasData && (
+                                                                <Flex fontSize="9px" color="gray.600" lineHeight="1" w="100%" justify="space-between" gap={2}>
+                                                                    <Text as="span" opacity={kcalVal === '—' ? 0 : 1}>{kcalVal}</Text>
+                                                                    <Text as="span" opacity={weightValMobile === '—' ? 0 : 1}>{weightValMobile}</Text>
+                                                                </Flex>
+                                                            )
+                                                        )
                                                     )}
                                                 </Box>
                                             </Tooltip>
@@ -357,6 +512,35 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
                     <Text fontSize="xs" color="gray.500">Today</Text>
                 </HStack>
             </Flex>
+                </>
+            )}
+
+            <AlertDialog
+                isOpen={isAddWeeksOpen}
+                leastDestructiveRef={cancelRef}
+                onClose={handleCancelAddWeeks}
+                isCentered
+            >
+                <AlertDialogOverlay />
+                <AlertDialogContent>
+                    <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                        Add weeks?
+                    </AlertDialogHeader>
+                    <AlertDialogBody>
+                        {dateToAddUntil
+                            ? `Add weeks until ${format(dateToAddUntil, 'MMMM d, yyyy')}?`
+                            : 'Add weeks until this date?'}
+                    </AlertDialogBody>
+                    <AlertDialogFooter>
+                        <Button ref={cancelRef} onClick={handleCancelAddWeeks}>
+                            Cancel
+                        </Button>
+                        <Button colorScheme="blue" onClick={handleConfirmAddWeeks} ml={3}>
+                            Add weeks
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Box>
     );
 };

@@ -15,13 +15,18 @@ import {
     HStack,
     VStack,
     Flex,
-    Badge,
     Button,
     Tooltip,
     IconButton,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalBody,
+    useDisclosure,
 } from '@chakra-ui/react';
 import { addDays, parseISO, format } from 'date-fns';
-import { Plus, Flame, Target, TrendingDown, TrendingUp, Scale, Calendar, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Flame, Target, TrendingDown, TrendingUp, Scale, Calendar, Info, ChevronLeft, ChevronRight, CalendarDays, Settings } from 'lucide-react';
 
 import WeekCalendar from './components/WeekCalendar';
 import DayCard from './components/DayCard';
@@ -40,6 +45,7 @@ export type CopyFromState = {
 } | null;
 
 const Calculator: React.FC = () => {
+    const navigate = useNavigate();
     const { user, isGuest } = useAuth();
     const { 
         fetchData, 
@@ -57,6 +63,7 @@ const Calculator: React.FC = () => {
         updateDay,
     } = useCalc();
     const [copyFrom, setCopyFrom] = useState<CopyFromState>(null);
+    const { isOpen: isCalendarOpen, onOpen: onCalendarOpen, onClose: onCalendarClose } = useDisclosure();
 
     const onCopyCalories = useCallback((weekNumber: number, dayIndex: number, value: number | '') => {
         setCopyFrom({ type: 'kcal', value, weekNumber, dayIndex });
@@ -148,7 +155,7 @@ const Calculator: React.FC = () => {
     if (needsSetup) {
         return (
             <Container maxW="100%" py={6}>
-                <Card bg={config.backgroundNav} shadow="sm">
+                <Card bg="white" shadow="sm">
                     <CardBody textAlign="center" py={10}>
                         <VStack spacing={4}>
                             <Calendar size={48} color={config.test4} />
@@ -159,9 +166,20 @@ const Calculator: React.FC = () => {
                                 Before you can start tracking, please complete the initial setup 
                                 with your starting weight, goal, and preferences.
                             </Text>
-                            <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
-                                Go to Setup in the menu to get started
-                            </Badge>
+                            <Button
+                                leftIcon={<Settings size={18} />}
+                                size="lg"
+                                bg={config.test5}
+                                color="white"
+                                _hover={{ bg: config.test4 }}
+                                _active={{ bg: config.test4 }}
+                                shadow="md"
+                                transition="all 0.2s"
+                                px={8}
+                                onClick={() => navigate('/setup')}
+                            >
+                                Go to Setup
+                            </Button>
                         </VStack>
                     </CardBody>
                 </Card>
@@ -297,33 +315,9 @@ const Calculator: React.FC = () => {
             {/* Week Info Header */}
             <Card bg="white" mb={4} shadow="sm">
                 <CardBody py={3} px={4}>
-                    <Flex justify="space-between" align="center" wrap="wrap" gap={3}>
-                        {/* Left: Week Kcal + Week Weight (same style as right) */}
-                        <HStack spacing={4}>
-                            <VStack align="start" spacing={0}>
-                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
-                                    Week Kcal
-                                </Text>
-                                <Text fontSize="sm" fontWeight="bold" color={avgKcalOnTarget ? config.test5 : avgKcalOffTarget ? 'red.500' : config.black}>
-                                    {currentWeekCalc && currentWeekCalc.avgKcal > 0
-                                        ? Math.round(currentWeekCalc.avgKcal).toLocaleString()
-                                        : '—'}
-                                </Text>
-                            </VStack>
-                            <VStack align="start" spacing={0}>
-                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
-                                    Week Weight
-                                </Text>
-                                <Text fontSize="sm" fontWeight="bold" color={avgWeightOnTarget ? config.test5 : avgWeightOffTarget ? 'red.500' : config.black}>
-                                    {currentWeekCalc && currentWeekCalc.avgWeight > 0
-                                        ? `${currentWeekCalc.avgWeight.toFixed(1)} ${weightUnit}`
-                                        : '—'}
-                                </Text>
-                            </VStack>
-                        </HStack>
-
-                        {/* Middle: Week N of M, date range, arrows */}
-                        <Flex align="center" gap={2}>
+                    {/* Mobile: top row = date + arrows + week N of M; bottom row = left stats | right stats */}
+                    <VStack align="stretch" spacing={3} display={{ base: 'flex', md: 'none' }}>
+                        <Flex justify="center" align="center" gap={2}>
                             <IconButton
                                 aria-label="Previous week"
                                 icon={<ChevronLeft size={20} />}
@@ -333,7 +327,7 @@ const Calculator: React.FC = () => {
                                 onClick={() => selectWeek(selectedWeek - 1)}
                             />
                             <VStack align="center" spacing={0}>
-                                <Text fontSize="sm" fontWeight="bold" color={config.black}>
+                                <Text fontSize="sm" fontWeight="bold" color={config.black} opacity={weekDateRange === '—' ? 0 : 1}>
                                     {weekDateRange}
                                 </Text>
                                 <Text fontSize="xs" color="gray.500">
@@ -349,37 +343,72 @@ const Calculator: React.FC = () => {
                                 onClick={() => selectWeek(selectedWeek + 1)}
                             />
                         </Flex>
-
-                        {/* Right: This Week delta + Week TDEE */}
+                        <Flex justify="space-between" align="flex-start">
+                            <HStack spacing={4}>
+                                <VStack align="start" spacing={0}>
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week Kcal</Text>
+                                    <Text fontSize="sm" fontWeight="bold" color={avgKcalOnTarget ? config.test5 : avgKcalOffTarget ? 'red.500' : config.black} opacity={!(currentWeekCalc && currentWeekCalc.avgKcal > 0) ? 0 : 1}>
+                                        {currentWeekCalc && currentWeekCalc.avgKcal > 0 ? Math.round(currentWeekCalc.avgKcal).toLocaleString() : '—'}
+                                    </Text>
+                                </VStack>
+                                <VStack align="start" spacing={0}>
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week TDEE</Text>
+                                    <Text fontSize="sm" fontWeight="bold" color={config.test5} opacity={!(currentWeekCalc && currentWeekCalc.weeklyTdee > 0) ? 0 : 1}>
+                                        {currentWeekCalc && currentWeekCalc.weeklyTdee > 0 ? Math.round(currentWeekCalc.weeklyTdee).toLocaleString() : '—'}
+                                    </Text>
+                                </VStack>
+                            </HStack>
+                            <HStack spacing={4}>
+                                <VStack align="end" spacing={0}>
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week Weight</Text>
+                                    <Text fontSize="sm" fontWeight="bold" color={avgWeightOnTarget ? config.test5 : avgWeightOffTarget ? 'red.500' : config.black} opacity={!(currentWeekCalc && currentWeekCalc.avgWeight > 0) ? 0 : 1}>
+                                        {currentWeekCalc && currentWeekCalc.avgWeight > 0 ? `${currentWeekCalc.avgWeight.toFixed(1)} ${weightUnit}` : '—'}
+                                    </Text>
+                                </VStack>
+                                <VStack align="end" spacing={0}>
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week change</Text>
+                                    <Text fontSize="sm" fontWeight="bold" color={currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0 ? (isWeightLoss ? (currentWeekCalc.weightChange < 0 ? config.test5 : 'red.500') : (currentWeekCalc.weightChange > 0 ? config.test5 : 'red.500')) : 'gray.500'} opacity={!(currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0) ? 0 : 1}>
+                                        {currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0 ? `${currentWeekCalc.weightChange > 0 ? '+' : ''}${currentWeekCalc.weightChange.toFixed(2)} ${weightUnit}` : '—'}
+                                    </Text>
+                                </VStack>
+                            </HStack>
+                        </Flex>
+                    </VStack>
+                    {/* Desktop: single row left | middle | right */}
+                    <Flex justify="space-between" align="center" wrap="wrap" gap={3} display={{ base: 'none', md: 'flex' }}>
+                        <HStack spacing={4}>
+                            <VStack align="start" spacing={0}>
+                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week Kcal</Text>
+                                <Text fontSize="sm" fontWeight="bold" color={avgKcalOnTarget ? config.test5 : avgKcalOffTarget ? 'red.500' : config.black} opacity={!(currentWeekCalc && currentWeekCalc.avgKcal > 0) ? 0 : 1}>
+                                    {currentWeekCalc && currentWeekCalc.avgKcal > 0 ? Math.round(currentWeekCalc.avgKcal).toLocaleString() : '—'}
+                                </Text>
+                            </VStack>
+                            <VStack align="start" spacing={0}>
+                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week TDEE</Text>
+                                <Text fontSize="sm" fontWeight="bold" color={config.test5} opacity={!(currentWeekCalc && currentWeekCalc.weeklyTdee > 0) ? 0 : 1}>
+                                    {currentWeekCalc && currentWeekCalc.weeklyTdee > 0 ? Math.round(currentWeekCalc.weeklyTdee).toLocaleString() : '—'}
+                                </Text>
+                            </VStack>
+                        </HStack>
+                        <Flex align="center" gap={2}>
+                            <IconButton aria-label="Previous week" icon={<ChevronLeft size={20} />} variant="ghost" size="sm" isDisabled={selectedWeek <= 1} onClick={() => selectWeek(selectedWeek - 1)} />
+                            <VStack align="center" spacing={0}>
+                                <Text fontSize="sm" fontWeight="bold" color={config.black} opacity={weekDateRange === '—' ? 0 : 1}>{weekDateRange}</Text>
+                                <Text fontSize="xs" color="gray.500">Week {selectedWeek} of {weekNumber}</Text>
+                            </VStack>
+                            <IconButton aria-label="Next week" icon={<ChevronRight size={20} />} variant="ghost" size="sm" isDisabled={selectedWeek >= weekNumber} onClick={() => selectWeek(selectedWeek + 1)} />
+                        </Flex>
                         <HStack spacing={4}>
                             <VStack align="end" spacing={0}>
-                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
-                                    This Week
-                                </Text>
-                                <Text
-                                    fontSize="sm"
-                                    fontWeight="bold"
-                                    color={
-                                        currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0
-                                            ? isWeightLoss
-                                                ? (currentWeekCalc.weightChange < 0 ? config.test5 : 'red.500')
-                                                : (currentWeekCalc.weightChange > 0 ? config.test5 : 'red.500')
-                                            : 'gray.500'
-                                    }
-                                >
-                                    {currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0
-                                        ? `${currentWeekCalc.weightChange > 0 ? '+' : ''}${currentWeekCalc.weightChange.toFixed(2)} ${weightUnit}`
-                                        : '—'}
+                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week Weight</Text>
+                                <Text fontSize="sm" fontWeight="bold" color={avgWeightOnTarget ? config.test5 : avgWeightOffTarget ? 'red.500' : config.black} opacity={!(currentWeekCalc && currentWeekCalc.avgWeight > 0) ? 0 : 1}>
+                                    {currentWeekCalc && currentWeekCalc.avgWeight > 0 ? `${currentWeekCalc.avgWeight.toFixed(1)} ${weightUnit}` : '—'}
                                 </Text>
                             </VStack>
                             <VStack align="end" spacing={0}>
-                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">
-                                    Week TDEE
-                                </Text>
-                                <Text fontSize="sm" fontWeight="bold" color={config.test5}>
-                                    {currentWeekCalc && currentWeekCalc.weeklyTdee > 0
-                                        ? Math.round(currentWeekCalc.weeklyTdee).toLocaleString()
-                                        : '—'}
+                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week change</Text>
+                                <Text fontSize="sm" fontWeight="bold" color={currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0 ? (isWeightLoss ? (currentWeekCalc.weightChange < 0 ? config.test5 : 'red.500') : (currentWeekCalc.weightChange > 0 ? config.test5 : 'red.500')) : 'gray.500'} opacity={!(currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0) ? 0 : 1}>
+                                    {currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0 ? `${currentWeekCalc.weightChange > 0 ? '+' : ''}${currentWeekCalc.weightChange.toFixed(2)} ${weightUnit}` : '—'}
                                 </Text>
                             </VStack>
                         </HStack>
@@ -420,8 +449,22 @@ const Calculator: React.FC = () => {
                 </Box>
             )}
 
-            {/* Add New Week Button - Centered */}
-            <Flex justify="center" mb={8}>
+            {/* Calendar View (left) + Add New Week (right) */}
+            <Flex justify="space-between" align="center" mb={8}>
+                <Button
+                    leftIcon={<CalendarDays size={18} />}
+                    size="lg"
+                    bg={config.test5}
+                    color="white"
+                    _hover={{ bg: config.test4 }}
+                    _active={{ bg: config.test4 }}
+                    onClick={onCalendarOpen}
+                    shadow="md"
+                    transition="all 0.2s"
+                    px={8}
+                >
+                    Calendar View
+                </Button>
                 <Button
                     leftIcon={<Plus size={18} />}
                     size="lg"
@@ -438,10 +481,14 @@ const Calculator: React.FC = () => {
                 </Button>
             </Flex>
 
-            {/* Monthly Calendar View */}
-            <Box>
-                <WeekCalendar startDate={startDate} />
-            </Box>
+            <Modal isOpen={isCalendarOpen} onClose={onCalendarClose} size="4xl" scrollBehavior="inside">
+                <ModalOverlay />
+                <ModalContent maxW="min(90vw, 720px)" mx="auto" my={4} maxH="90vh" bg={config.backgroundNav}>
+                    <ModalBody p={4} overflowY="auto" bg={config.backgroundNav}>
+                        <WeekCalendar startDate={startDate} onClose={onCalendarClose} />
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
 
             {/* Loading indicator */}
             {(syncing || loading) && (

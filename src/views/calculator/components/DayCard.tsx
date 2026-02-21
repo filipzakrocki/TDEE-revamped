@@ -246,7 +246,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 <Box w="100%">
                     <Text fontSize="xs" color="gray.500" mb={0} lineHeight="1">Calories</Text>
                     <InputGroup size="sm">
-                        <InputLeftAddon bg={config.test2} borderColor="gray.200" minW="28px" h="30px" alignItems="center" justifyContent="center">
+                        <InputLeftAddon bg="white" borderColor="gray.200" minW="28px" h="30px" alignItems="center" justifyContent="center">
                             <Tooltip
                                 label={
                                     showPasteCalories ? 'Paste calories here' :
@@ -291,7 +291,7 @@ const DayCard: React.FC<DayCardProps> = ({
                             fontSize="xs"
                             h="30px"
                         />
-                        <InputRightAddon p={0} h="30px" w="20px" bg={config.test2} borderColor="gray.200" display="flex" flexDirection="column">
+                        <InputRightAddon p={0} h="30px" w="20px" bg="white" borderColor="gray.200" display="flex" flexDirection="column">
                             <IconButton
                                 aria-label="Increase calories"
                                 icon={<ChevronUp size={12} />}
@@ -318,7 +318,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 <Box w="100%">
                     <Text fontSize="xs" color="gray.500" mb={0} lineHeight="1">Weight</Text>
                     <InputGroup size="sm">
-                        <InputLeftAddon bg={config.test2} borderColor="gray.200" minW="28px" h="30px" alignItems="center" justifyContent="center">
+                        <InputLeftAddon bg="white" borderColor="gray.200" minW="28px" h="30px" alignItems="center" justifyContent="center">
                             <Tooltip
                                 label={
                                     showPasteWeight ? 'Paste weight here' :
@@ -364,7 +364,7 @@ const DayCard: React.FC<DayCardProps> = ({
                             fontSize="xs"
                             h="30px"
                         />
-                        <InputRightAddon p={0} h="30px" w="20px" bg={config.test2} borderColor="gray.200" display="flex" flexDirection="column">
+                        <InputRightAddon p={0} h="30px" w="20px" bg="white" borderColor="gray.200" display="flex" flexDirection="column">
                             <IconButton
                                 aria-label="Increase weight"
                                 icon={<ChevronUp size={12} />}
@@ -391,9 +391,9 @@ const DayCard: React.FC<DayCardProps> = ({
             </VStack>
 
             {/* Target - always same row for alignment */}
-            <Flex justify="center" pt={2} mt="auto" flexShrink={0} borderTop="1px dashed" borderColor="gray.200" minH="28px" align="center">
-                <Text fontSize="xs" color="gray.400">
-                    Target: {weeklyTarget > 0 && !isFuture ? weeklyTarget.toLocaleString() : '—'}
+            <Flex justify="center" pt={2} mt="auto" flexShrink={0} minH="28px" align="center">
+                <Text fontSize="xs" color="gray.700">
+                    Target: {weeklyTarget > 0 ? weeklyTarget.toLocaleString() : '—'}
                 </Text>
             </Flex>
         </Box>

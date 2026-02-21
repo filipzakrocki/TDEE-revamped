@@ -13,6 +13,7 @@ import {
     KCAL_PER_KG,
     KCAL_PER_LB,
 } from '../../utils/calculations';
+import { parseISO, differenceInDays } from 'date-fns';
 
 // Sync utilities
 const FALLBACK_STORAGE_KEY = 'tdee-calc-data';
@@ -157,6 +158,7 @@ interface CalcState extends CalcPayload {
     
     // Week operations
     addNewWeek: () => void;
+    addWeeksUntil: (targetDateIso: string) => void;
     updateDay: (payload: { dayIndex: number; weekNumber: number; type: 'kg' | 'kcal'; value: number | '' }) => void;
     selectWeek: (weekNumber: number) => void;
     toggleWeekLock: (weekNumber: number) => void;
@@ -280,6 +282,42 @@ export const useCalcStore = create<CalcState>((set) => ({
         debouncedSync(newState);
         showSuccessToast('New week added');
         return newState;
+    }),
+
+    addWeeksUntil: (targetDateIso: string) => set((state) => {
+        if (!state.startDate) return state;
+        try {
+            const start = parseISO(state.startDate);
+            const target = parseISO(targetDateIso);
+            const daysDiff = differenceInDays(target, start);
+            if (daysDiff < 0) return state;
+            // 1-based week number that contains the clicked day (UI uses 1-based: week 1 = days 0–6)
+            const targetWeek1Based = Math.floor(daysDiff / 7) + 1;
+            const currentLength = state.weekData.length;
+            // We need an element with .week === targetWeek1Based; array has week 0,1,..., so need length >= targetWeek1Based + 1
+            if (currentLength >= targetWeek1Based + 1) return state;
+            const weeksToAdd = targetWeek1Based + 1 - currentLength;
+            const newWeekData = [...state.weekData];
+            for (let i = 0; i < weeksToAdd; i++) {
+                newWeekData.push({
+                    week: newWeekData.length,
+                    days: Array(7).fill(null).map(() => ({ kg: '', kcal: '' }) as { kg: number | ''; kcal: number | '' }),
+                    avgKcal: 0,
+                    avgWeight: 0,
+                    locked: false,
+                });
+            }
+            const newState = {
+                ...state,
+                weekData: newWeekData,
+                selectedWeek: targetWeek1Based,
+            };
+            debouncedSync(newState);
+            showSuccessToast(weeksToAdd === 1 ? '1 week added' : `${weeksToAdd} weeks added`);
+            return newState;
+        } catch {
+            return state;
+        }
     }),
 
     updateDay: ({ dayIndex, weekNumber, type, value }) => set((state) => {
@@ -460,6 +498,7 @@ export const useCalc = () => ({
     
     // Week operations
     addNewWeek: useCalcStore(state => state.addNewWeek),
+    addWeeksUntil: useCalcStore(state => state.addWeeksUntil),
     updateDay: useCalcStore(state => state.updateDay),
     selectWeek: useCalcStore(state => state.selectWeek),
     toggleWeekLock: useCalcStore(state => state.toggleWeekLock),
