@@ -24,7 +24,7 @@ const WeekRow: React.FC<WeekRowProps> = ({ week, rowIndex, startDate }) => {
                     boxShadow="md"
                     borderRadius="md"
                     textAlign="center"
-                    _hover={{ transform: 'translateY(-5px)', boxShadow: 'lg' }}
+                    _hover={{ boxShadow: 'lg' }}
                     transition="all 0.2s"
                 >
                     <Text mb={2}>Week {week.week}</Text>

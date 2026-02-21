@@ -36,20 +36,25 @@ import {
     ComposedChart,
     Area,
 } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 import { format, parseISO, addDays, getDay } from 'date-fns';
-import { TrendingUp, TrendingDown, Target, Flame, Calendar, Award, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, Flame, Calendar, Award, AlertTriangle, Settings } from 'lucide-react';
 
 import { useCalc } from '../../stores/calc/calcStore';
 import { useTDEECalculations } from '../../hooks/useTDEECalculations';
 import { config } from '../../config';
 
 const Analysis: React.FC = () => {
+    const navigate = useNavigate();
     const {
         weekData,
         startDate,
         startWeight,
+        goalWeight,
         isMetricSystem,
     } = useCalc();
+
+    const needsSetup = !startDate || startWeight === 0 || goalWeight === 0;
 
     const {
         currentTdee,
@@ -317,14 +322,32 @@ const Analysis: React.FC = () => {
     if (displayWeeks.length === 0 || dailyData.length === 0) {
         return (
             <Container maxW="100%" py={6}>
-                <Card bg={config.backgroundNav}>
+                <Card bg="white">
                     <CardBody textAlign="center" py={10}>
                         <VStack spacing={4}>
                             <Calendar size={48} color={config.test4} />
-                            <Heading size="md" color={config.black}>No Data Yet</Heading>
+                            <Heading size="md" color={config.black}>
+                                {needsSetup ? 'Complete Setup First' : 'No Data Yet'}
+                            </Heading>
                             <Text color="gray.600">
-                                Start tracking your calories and weight in the Calculator to see analytics.
+                                {needsSetup
+                                    ? 'Enter your starting weight, goal, and preferences in Setup to start tracking.'
+                                    : 'Start tracking your calories and weight in the Calculator to see analytics.'}
                             </Text>
+                            <Button
+                                leftIcon={needsSetup ? <Settings size={18} /> : <Calendar size={18} />}
+                                size="lg"
+                                bg={config.test5}
+                                color="white"
+                                _hover={{ bg: config.test4 }}
+                                _active={{ bg: config.test4 }}
+                                shadow="md"
+                                transition="all 0.2s"
+                                px={8}
+                                onClick={() => navigate(needsSetup ? '/setup' : '/calculator')}
+                            >
+                                {needsSetup ? 'Go to Setup' : 'Go to Calculator'}
+                            </Button>
                         </VStack>
                     </CardBody>
                 </Card>

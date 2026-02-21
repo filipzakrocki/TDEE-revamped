@@ -22,8 +22,8 @@ code {
 // Background scrolling animation
 .animated-bg {
   background: url('../src/assets/tdeefit.png') repeat;
-  background-size: 20% 20%;
-  animation: slide 20s linear infinite; 
+  background-size: 250px 120px;
+  animation: slide 2s linear infinite;
 }
 
 @keyframes slide {
@@ -31,6 +31,6 @@ code {
     background-position: 0 0;
   }
   to {
-    background-position: 100vw 100vh; 
+    background-position: 250px 120px;
   }
 }

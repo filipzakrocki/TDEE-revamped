@@ -13,6 +13,7 @@ import {
     KCAL_PER_KG,
     KCAL_PER_LB,
 } from '../../utils/calculations';
+import { parseISO, differenceInDays } from 'date-fns';
 
 // Sync utilities
 const FALLBACK_STORAGE_KEY = 'tdee-calc-data';
@@ -41,6 +42,7 @@ const syncToStorage = (state: CalcState) => {
 
 function toPayload(state: CalcState): CalcPayload {
     return {
+        calendarWeekStartsOnMonday: state.calendarWeekStartsOnMonday,
         startDate: state.startDate,
         startWeight: state.startWeight,
         goalWeight: state.goalWeight,
@@ -129,6 +131,7 @@ interface CalcPayload {
     avgTdeeOverTime: number[];
     avgWeight: number;
     avgWeightOverTime: number[];
+    calendarWeekStartsOnMonday: boolean;
     dailyKcalChange: number;
     goalWeight: number;
     initialInputsLocked: boolean;
@@ -155,6 +158,7 @@ interface CalcState extends CalcPayload {
     
     // Week operations
     addNewWeek: () => void;
+    addWeeksUntil: (targetDateIso: string) => void;
     updateDay: (payload: { dayIndex: number; weekNumber: number; type: 'kg' | 'kcal'; value: number | '' }) => void;
     selectWeek: (weekNumber: number) => void;
     toggleWeekLock: (weekNumber: number) => void;
@@ -168,11 +172,13 @@ interface CalcState extends CalcPayload {
     setWeeksForAvg: (weeks: number) => void;
     toggleMeasurementSystem: () => void;
     toggleCompactView: () => void;
+    toggleCalendarWeekStart: () => void;
     lockInitialInputs: () => void;
 }
 
 export const useCalcStore = create<CalcState>((set) => ({
     fetched: false,
+    calendarWeekStartsOnMonday: true,
     startDate: "",
     startWeight: 0,
     goalWeight: 0,
@@ -216,8 +222,8 @@ export const useCalcStore = create<CalcState>((set) => ({
             const dataRef = ref(database, `states/${uid}`);
             const snapshot = await get(dataRef);
             if (snapshot.exists()) {
-                console.log(snapshot.val());
-                set(snapshot.val());
+                const data = snapshot.val();
+                set((state) => ({ ...state, ...data }));
                 fetchDataSuccess();
                 showSuccessToast('Data loaded successfully');
             } else {
@@ -250,7 +256,7 @@ export const useCalcStore = create<CalcState>((set) => ({
 
             if (stored) {
                 const parsedData = JSON.parse(stored);
-                set(parsedData);
+                set((state) => ({ ...state, ...parsedData }));
                 console.log(`Data loaded from localStorage with key: ${storageKey}`);
             } else {
                 console.log('No stored data found');
@@ -261,19 +267,57 @@ export const useCalcStore = create<CalcState>((set) => ({
     },
 
     addNewWeek: () => set((state) => {
+        const newWeekNumber = state.weekData.length;
         const newState = {
             ...state,
             weekData: [...state.weekData, {
-                week: state.weekData.length,
+                week: newWeekNumber,
                 days: Array(7).fill(null).map(() => ({ kg: '', kcal: '' }) as { kg: number | ''; kcal: number | '' }),
                 avgKcal: 0,
                 avgWeight: 0,
                 locked: false
-            }]
+            }],
+            selectedWeek: newWeekNumber,
         };
         debouncedSync(newState);
         showSuccessToast('New week added');
         return newState;
+    }),
+
+    addWeeksUntil: (targetDateIso: string) => set((state) => {
+        if (!state.startDate) return state;
+        try {
+            const start = parseISO(state.startDate);
+            const target = parseISO(targetDateIso);
+            const daysDiff = differenceInDays(target, start);
+            if (daysDiff < 0) return state;
+            // 1-based week number that contains the clicked day (UI uses 1-based: week 1 = days 0–6)
+            const targetWeek1Based = Math.floor(daysDiff / 7) + 1;
+            const currentLength = state.weekData.length;
+            // We need an element with .week === targetWeek1Based; array has week 0,1,..., so need length >= targetWeek1Based + 1
+            if (currentLength >= targetWeek1Based + 1) return state;
+            const weeksToAdd = targetWeek1Based + 1 - currentLength;
+            const newWeekData = [...state.weekData];
+            for (let i = 0; i < weeksToAdd; i++) {
+                newWeekData.push({
+                    week: newWeekData.length,
+                    days: Array(7).fill(null).map(() => ({ kg: '', kcal: '' }) as { kg: number | ''; kcal: number | '' }),
+                    avgKcal: 0,
+                    avgWeight: 0,
+                    locked: false,
+                });
+            }
+            const newState = {
+                ...state,
+                weekData: newWeekData,
+                selectedWeek: targetWeek1Based,
+            };
+            debouncedSync(newState);
+            showSuccessToast(weeksToAdd === 1 ? '1 week added' : `${weeksToAdd} weeks added`);
+            return newState;
+        } catch {
+            return state;
+        }
     }),
 
     updateDay: ({ dayIndex, weekNumber, type, value }) => set((state) => {
@@ -289,11 +333,10 @@ export const useCalcStore = create<CalcState>((set) => ({
         return newState;
     }),
 
-    selectWeek: (weekNumber: number) => set((state) => {
-        const newState = { ...state, selectedWeek: weekNumber };
-        debouncedSync(newState);
-        return newState;
-    }),
+    selectWeek: (weekNumber: number) => set((state) => ({
+        ...state,
+        selectedWeek: weekNumber,
+    })),
 
     toggleWeekLock: (weekNumber: number) => set((state) => {
         const newWeekData = [...state.weekData];
@@ -413,6 +456,12 @@ export const useCalcStore = create<CalcState>((set) => ({
         return newState;
     }),
 
+    toggleCalendarWeekStart: () => set((state) => {
+        const newState = { ...state, calendarWeekStartsOnMonday: !state.calendarWeekStartsOnMonday };
+        debouncedSync(newState);
+        return newState;
+    }),
+
     lockInitialInputs: () => set((state) => {
         const newState = { ...state, initialInputsLocked: true };
         debouncedSync(newState);
@@ -423,6 +472,7 @@ export const useCalcStore = create<CalcState>((set) => ({
 export const useCalc = () => ({
     // State values
     fetched: useCalcStore(state => state.fetched),
+    calendarWeekStartsOnMonday: useCalcStore(state => state.calendarWeekStartsOnMonday),
     startDate: useCalcStore(state => state.startDate),
     startWeight: useCalcStore(state => state.startWeight),
     goalWeight: useCalcStore(state => state.goalWeight),
@@ -448,6 +498,7 @@ export const useCalc = () => ({
     
     // Week operations
     addNewWeek: useCalcStore(state => state.addNewWeek),
+    addWeeksUntil: useCalcStore(state => state.addWeeksUntil),
     updateDay: useCalcStore(state => state.updateDay),
     selectWeek: useCalcStore(state => state.selectWeek),
     toggleWeekLock: useCalcStore(state => state.toggleWeekLock),
@@ -461,5 +512,6 @@ export const useCalc = () => ({
     setWeeksForAvg: useCalcStore(state => state.setWeeksForAvg),
     toggleMeasurementSystem: useCalcStore(state => state.toggleMeasurementSystem),
     toggleCompactView: useCalcStore(state => state.toggleCompactView),
+    toggleCalendarWeekStart: useCalcStore(state => state.toggleCalendarWeekStart),
     lockInitialInputs: useCalcStore(state => state.lockInitialInputs),
 })

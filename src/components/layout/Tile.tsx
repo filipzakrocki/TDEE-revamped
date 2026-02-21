@@ -12,7 +12,7 @@ const Tile: React.FC<TileProps> = ({ children, bg, height: heightProp }) => {
     const height = heightProp ?? config.mainFrameHeight;
 
     return (
-        <Box bg={bg || config.backgroundNav} height={height} sx={{ overflowY: 'auto' }} p={config.padding}>
+        <Box bg={bg || config.backgroundNav} height={height} sx={{ overflowY: 'auto' }} p={{ base: 1, md: config.padding }}>
             {children}
         </Box>
     );

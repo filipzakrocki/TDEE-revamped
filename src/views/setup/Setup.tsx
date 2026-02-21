@@ -549,7 +549,7 @@ const Setup: React.FC = () => {
                                         </StatNumber>
                                         <StatHelpText fontSize="xs" opacity={0.8}>
                                             {dailyKcalChange > 0 && currentTdee > 0
-                                                ? `${isWeightLoss ? 'deficit' : 'surplus'}`
+                                                ? `${isWeightLoss ? 'deficit' : 'surplus'} of ${Math.abs(dailyKcalChange).toLocaleString()} kcal`
                                                 : 'kcal/day'
                                             }
                                         </StatHelpText>
