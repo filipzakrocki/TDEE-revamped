@@ -450,10 +450,10 @@ const Calculator: React.FC = () => {
             )}
 
             {/* Calendar View (left) + Add New Week (right) */}
-            <Flex justify="space-between" align="center" mb={8}>
+            <Flex justify="space-between" align="center" mb={8} gap={2}>
                 <Button
                     leftIcon={<CalendarDays size={18} />}
-                    size="lg"
+                    size={{ base: 'sm', md: 'lg' }}
                     bg={config.test5}
                     color="white"
                     _hover={{ bg: config.test4 }}
@@ -461,13 +461,13 @@ const Calculator: React.FC = () => {
                     onClick={onCalendarOpen}
                     shadow="md"
                     transition="all 0.2s"
-                    px={8}
+                    px={{ base: 3, md: 8 }}
                 >
                     Calendar View
                 </Button>
                 <Button
                     leftIcon={<Plus size={18} />}
-                    size="lg"
+                    size={{ base: 'sm', md: 'lg' }}
                     bg={config.test5}
                     color="white"
                     _hover={{ bg: config.test4 }}
@@ -475,7 +475,7 @@ const Calculator: React.FC = () => {
                     onClick={addNewWeek}
                     shadow="md"
                     transition="all 0.2s"
-                    px={8}
+                    px={{ base: 3, md: 8 }}
                 >
                     Add New Week
                 </Button>
@@ -483,8 +483,8 @@ const Calculator: React.FC = () => {
 
             <Modal isOpen={isCalendarOpen} onClose={onCalendarClose} size="4xl" scrollBehavior="inside">
                 <ModalOverlay />
-                <ModalContent maxW="min(90vw, 720px)" mx="auto" my={4} maxH="90vh" bg={config.backgroundNav}>
-                    <ModalBody p={4} overflowY="auto" bg={config.backgroundNav}>
+                <ModalContent maxW={{ base: '98vw', md: 'min(90vw, 720px)' }} mx="auto" my={{ base: 2, md: 4 }} maxH="90vh" bg={config.backgroundNav}>
+                    <ModalBody p={{ base: 2, md: 4 }} overflowY="auto" bg={config.backgroundNav}>
                         <WeekCalendar startDate={startDate} onClose={onCalendarClose} />
                     </ModalBody>
                 </ModalContent>
