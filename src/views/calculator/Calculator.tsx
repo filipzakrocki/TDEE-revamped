@@ -6,6 +6,8 @@ import {
     Spinner,
     Box,
     SimpleGrid,
+    Grid,
+    GridItem,
     Card,
     CardBody,
     Stat,
@@ -312,85 +314,12 @@ const Calculator: React.FC = () => {
                 </Card>
             </SimpleGrid>
 
-            {/* Week Info Header */}
+            {/* Week Info Header: left = 2x2 stats, right = date selector */}
             <Card bg="white" mb={4} shadow="sm">
                 <CardBody py={3} px={4}>
-                    {/* Mobile: top row = date + arrows + week N of M; bottom row = left stats | right stats */}
-                    <VStack align="stretch" spacing={3} display={{ base: 'flex', md: 'none' }}>
+                    <VStack align="stretch" spacing={4}>
+                        {/* Week selector: date range + arrows */}
                         <Flex justify="center" align="center" gap={2}>
-                            <IconButton
-                                aria-label="Previous week"
-                                icon={<ChevronLeft size={20} />}
-                                variant="ghost"
-                                size="sm"
-                                isDisabled={selectedWeek <= 1}
-                                onClick={() => selectWeek(selectedWeek - 1)}
-                            />
-                            <VStack align="center" spacing={0}>
-                                <Text fontSize="sm" fontWeight="bold" color={config.black} opacity={weekDateRange === '—' ? 0 : 1}>
-                                    {weekDateRange}
-                                </Text>
-                                <Text fontSize="xs" color="gray.500">
-                                    Week {selectedWeek} of {weekNumber}
-                                </Text>
-                            </VStack>
-                            <IconButton
-                                aria-label="Next week"
-                                icon={<ChevronRight size={20} />}
-                                variant="ghost"
-                                size="sm"
-                                isDisabled={selectedWeek >= weekNumber}
-                                onClick={() => selectWeek(selectedWeek + 1)}
-                            />
-                        </Flex>
-                        <Flex justify="space-between" align="flex-start">
-                            <HStack spacing={4}>
-                                <VStack align="start" spacing={0}>
-                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week Kcal</Text>
-                                    <Text fontSize="sm" fontWeight="bold" color={avgKcalOnTarget ? config.test5 : avgKcalOffTarget ? 'red.500' : config.black} opacity={!(currentWeekCalc && currentWeekCalc.avgKcal > 0) ? 0 : 1}>
-                                        {currentWeekCalc && currentWeekCalc.avgKcal > 0 ? Math.round(currentWeekCalc.avgKcal).toLocaleString() : '—'}
-                                    </Text>
-                                </VStack>
-                                <VStack align="start" spacing={0}>
-                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week TDEE</Text>
-                                    <Text fontSize="sm" fontWeight="bold" color={config.test5} opacity={!(currentWeekCalc && currentWeekCalc.weeklyTdee > 0) ? 0 : 1}>
-                                        {currentWeekCalc && currentWeekCalc.weeklyTdee > 0 ? Math.round(currentWeekCalc.weeklyTdee).toLocaleString() : '—'}
-                                    </Text>
-                                </VStack>
-                            </HStack>
-                            <HStack spacing={4}>
-                                <VStack align="end" spacing={0}>
-                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week Weight</Text>
-                                    <Text fontSize="sm" fontWeight="bold" color={avgWeightOnTarget ? config.test5 : avgWeightOffTarget ? 'red.500' : config.black} opacity={!(currentWeekCalc && currentWeekCalc.avgWeight > 0) ? 0 : 1}>
-                                        {currentWeekCalc && currentWeekCalc.avgWeight > 0 ? `${currentWeekCalc.avgWeight.toFixed(1)} ${weightUnit}` : '—'}
-                                    </Text>
-                                </VStack>
-                                <VStack align="end" spacing={0}>
-                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week change</Text>
-                                    <Text fontSize="sm" fontWeight="bold" color={currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0 ? (isWeightLoss ? (currentWeekCalc.weightChange < 0 ? config.test5 : 'red.500') : (currentWeekCalc.weightChange > 0 ? config.test5 : 'red.500')) : 'gray.500'} opacity={!(currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0) ? 0 : 1}>
-                                        {currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0 ? `${currentWeekCalc.weightChange > 0 ? '+' : ''}${currentWeekCalc.weightChange.toFixed(2)} ${weightUnit}` : '—'}
-                                    </Text>
-                                </VStack>
-                            </HStack>
-                        </Flex>
-                    </VStack>
-                    {/* Desktop: single row left | middle | right */}
-                    <Flex justify="space-between" align="center" wrap="wrap" gap={3} display={{ base: 'none', md: 'flex' }}>
-                        <HStack spacing={4}>
-                            <VStack align="start" spacing={0}>
-                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week Kcal</Text>
-                                <Text fontSize="sm" fontWeight="bold" color={avgKcalOnTarget ? config.test5 : avgKcalOffTarget ? 'red.500' : config.black} opacity={!(currentWeekCalc && currentWeekCalc.avgKcal > 0) ? 0 : 1}>
-                                    {currentWeekCalc && currentWeekCalc.avgKcal > 0 ? Math.round(currentWeekCalc.avgKcal).toLocaleString() : '—'}
-                                </Text>
-                            </VStack>
-                            <VStack align="start" spacing={0}>
-                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week TDEE</Text>
-                                <Text fontSize="sm" fontWeight="bold" color={config.test5} opacity={!(currentWeekCalc && currentWeekCalc.weeklyTdee > 0) ? 0 : 1}>
-                                    {currentWeekCalc && currentWeekCalc.weeklyTdee > 0 ? Math.round(currentWeekCalc.weeklyTdee).toLocaleString() : '—'}
-                                </Text>
-                            </VStack>
-                        </HStack>
-                        <Flex align="center" gap={2}>
                             <IconButton aria-label="Previous week" icon={<ChevronLeft size={20} />} variant="ghost" size="sm" isDisabled={selectedWeek <= 1} onClick={() => selectWeek(selectedWeek - 1)} />
                             <VStack align="center" spacing={0}>
                                 <Text fontSize="sm" fontWeight="bold" color={config.black} opacity={weekDateRange === '—' ? 0 : 1}>{weekDateRange}</Text>
@@ -398,21 +327,42 @@ const Calculator: React.FC = () => {
                             </VStack>
                             <IconButton aria-label="Next week" icon={<ChevronRight size={20} />} variant="ghost" size="sm" isDisabled={selectedWeek >= weekNumber} onClick={() => selectWeek(selectedWeek + 1)} />
                         </Flex>
-                        <HStack spacing={4}>
-                            <VStack align="end" spacing={0}>
-                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week Weight</Text>
-                                <Text fontSize="sm" fontWeight="bold" color={avgWeightOnTarget ? config.test5 : avgWeightOffTarget ? 'red.500' : config.black} opacity={!(currentWeekCalc && currentWeekCalc.avgWeight > 0) ? 0 : 1}>
-                                    {currentWeekCalc && currentWeekCalc.avgWeight > 0 ? `${currentWeekCalc.avgWeight.toFixed(1)} ${weightUnit}` : '—'}
-                                </Text>
-                            </VStack>
-                            <VStack align="end" spacing={0}>
-                                <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week change</Text>
-                                <Text fontSize="sm" fontWeight="bold" color={currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0 ? (isWeightLoss ? (currentWeekCalc.weightChange < 0 ? config.test5 : 'red.500') : (currentWeekCalc.weightChange > 0 ? config.test5 : 'red.500')) : 'gray.500'} opacity={!(currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0) ? 0 : 1}>
-                                    {currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0 ? `${currentWeekCalc.weightChange > 0 ? '+' : ''}${currentWeekCalc.weightChange.toFixed(2)} ${weightUnit}` : '—'}
-                                </Text>
-                            </VStack>
-                        </HStack>
-                    </Flex>
+                        {/* Below: 2x2 grid 50% / 50%, content centered in each cell */}
+                        <Grid templateColumns="1fr 1fr" templateRows="1fr 1fr" gap={3} w="100%">
+                            <GridItem display="flex" justifyContent="center" alignItems="center">
+                                <VStack align="center" spacing={0}>
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week Kcal</Text>
+                                    <Text fontSize="sm" fontWeight="bold" color={avgKcalOnTarget ? config.test5 : avgKcalOffTarget ? 'red.500' : config.black} opacity={!(currentWeekCalc && currentWeekCalc.avgKcal > 0) ? 0 : 1}>
+                                        {currentWeekCalc && currentWeekCalc.avgKcal > 0 ? Math.round(currentWeekCalc.avgKcal).toLocaleString() : '—'}
+                                    </Text>
+                                </VStack>
+                            </GridItem>
+                            <GridItem display="flex" justifyContent="center" alignItems="center">
+                                <VStack align="center" spacing={0}>
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week TDEE</Text>
+                                    <Text fontSize="sm" fontWeight="bold" color={config.test5} opacity={!(currentWeekCalc && currentWeekCalc.weeklyTdee > 0) ? 0 : 1}>
+                                        {currentWeekCalc && currentWeekCalc.weeklyTdee > 0 ? Math.round(currentWeekCalc.weeklyTdee).toLocaleString() : '—'}
+                                    </Text>
+                                </VStack>
+                            </GridItem>
+                            <GridItem display="flex" justifyContent="center" alignItems="center">
+                                <VStack align="center" spacing={0}>
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week Weight</Text>
+                                    <Text fontSize="sm" fontWeight="bold" color={avgWeightOnTarget ? config.test5 : avgWeightOffTarget ? 'red.500' : config.black} opacity={!(currentWeekCalc && currentWeekCalc.avgWeight > 0) ? 0 : 1}>
+                                        {currentWeekCalc && currentWeekCalc.avgWeight > 0 ? `${currentWeekCalc.avgWeight.toFixed(1)} ${weightUnit}` : '—'}
+                                    </Text>
+                                </VStack>
+                            </GridItem>
+                            <GridItem display="flex" justifyContent="center" alignItems="center">
+                                <VStack align="center" spacing={0}>
+                                    <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wide">Week change</Text>
+                                    <Text fontSize="sm" fontWeight="bold" color={currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0 ? (isWeightLoss ? (currentWeekCalc.weightChange < 0 ? config.test5 : 'red.500') : (currentWeekCalc.weightChange > 0 ? config.test5 : 'red.500')) : 'gray.500'} opacity={!(currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0) ? 0 : 1}>
+                                        {currentWeekCalc && currentWeekCalc.avgKcal > 0 && currentWeekCalc.avgWeight > 0 && currentWeekCalc.weightChange !== 0 ? `${currentWeekCalc.weightChange > 0 ? '+' : ''}${currentWeekCalc.weightChange.toFixed(2)} ${weightUnit}` : '—'}
+                                    </Text>
+                                </VStack>
+                            </GridItem>
+                        </Grid>
+                    </VStack>
                 </CardBody>
             </Card>
 
