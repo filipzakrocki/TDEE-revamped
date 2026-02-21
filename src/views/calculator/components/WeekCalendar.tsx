@@ -10,7 +10,6 @@ import {
     Grid,
     GridItem,
     Tooltip,
-    useBreakpointValue,
     AlertDialog,
     AlertDialogBody,
     AlertDialogFooter,
@@ -48,7 +47,6 @@ interface WeekCalendarProps {
 }
 
 const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
-    const isMobile = useBreakpointValue({ base: true, md: false }) ?? true;
     const { weekData, selectedWeek, selectWeek, addWeeksUntil, calendarWeekStartsOnMonday, toggleCalendarWeekStart, isMetricSystem } = useCalc();
     const [dateToAddUntil, setDateToAddUntil] = React.useState<Date | null>(null);
     const { isOpen: isAddWeeksOpen, onOpen: onAddWeeksOpen, onClose: onAddWeeksClose } = useDisclosure();
