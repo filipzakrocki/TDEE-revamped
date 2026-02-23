@@ -31,7 +31,15 @@ const PrivateLayout = (): JSX.Element => {
   if (!isAuthenticated) return <Navigate to="/" replace />;
 
   return (
-    <Flex flex="1" width="100%" h="100vh" maxH="100vh" minH={0} bg={config.backgroundColor}>
+    <Flex 
+      flex="1" 
+      width="100%" 
+      h="100dvh"
+      maxH="100dvh"
+      minH={0} 
+      bg={config.backgroundColor}
+      pb={{ base: 'max(env(safe-area-inset-bottom, 0px), 20px)', [MOBILE_BREAKPOINT]: 0 }}
+    >
       <Box flex={1} minW={config.layoutGutter} aria-hidden display={{ base: 'none', [MOBILE_BREAKPOINT]: 'block' }} />
         <Flex w={config.mainPanelMaxWidth} maxW="100%" flexShrink={1} minW={0} h="100%" minH={0}>
           <Box

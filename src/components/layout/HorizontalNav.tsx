@@ -39,6 +39,7 @@ const HorizontalNav: React.FC = () => {
   return (
     <Box
       w="100%"
+      h="65px"
       minH="65px"
       px={config.layoutGutter}
       bg={config.backgroundNav}
@@ -48,8 +49,6 @@ const HorizontalNav: React.FC = () => {
       minW={0}
       display="flex"
       alignItems="center"
-      pt={2}
-      pb="calc(8px + env(safe-area-inset-bottom, 0px))"
     >
       <LogoutConfirmModal
         isOpen={logoutModalOpen}
