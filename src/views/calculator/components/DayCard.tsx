@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Text,
@@ -11,8 +11,17 @@ import {
     Flex,
     Tooltip,
     IconButton,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
+    Button,
+    Textarea,
+    useDisclosure,
 } from '@chakra-ui/react';
-import { Utensils, Scale, ClipboardPaste, ChevronUp, ChevronDown } from 'lucide-react';
+import { Utensils, Scale, ClipboardPaste, ChevronUp, ChevronDown, StickyNote, MessageSquareText } from 'lucide-react';
 import { format, addDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { useCalc } from '../../../stores/calc/calcStore';
@@ -32,6 +41,7 @@ interface DayCardProps {
     day: {
         kg: number | '';
         kcal: number | '';
+        comment?: string;
     };
     isEditable: boolean;
     weeklyTarget: number; // The target for THIS specific week
@@ -58,7 +68,20 @@ const DayCard: React.FC<DayCardProps> = ({
     onCancelCopy,
 }) => {
     const { updateDay } = useCalc();
-    const { isWeightLoss } = useTDEECalculations();
+    const { isWeightLoss, currentAvgWeight } = useTDEECalculations();
+    
+    const { isOpen: isNoteOpen, onOpen: onNoteOpen, onClose: onNoteClose } = useDisclosure();
+    const [noteValue, setNoteValue] = useState(day.comment || '');
+    
+    const handleSaveNote = () => {
+        updateDay({ dayIndex, weekNumber, type: 'comment', value: noteValue });
+        onNoteClose();
+    };
+    
+    const handleOpenNote = () => {
+        setNoteValue(day.comment || '');
+        onNoteOpen();
+    };
     
     // Calculate the date for this day
     const getDayDate = (): Date => {
@@ -81,6 +104,17 @@ const DayCard: React.FC<DayCardProps> = ({
     const hasWeight = day.kg !== '' && day.kg !== 0;
     const hasData = hasKcal || hasWeight;
     
+    // Check if weight is on target (compared to current average weight)
+    let weightOnTarget = false;
+    if (hasWeight && currentAvgWeight > 0) {
+        const weight = Number(day.kg);
+        if (isWeightLoss) {
+            weightOnTarget = weight <= currentAvgWeight;
+        } else {
+            weightOnTarget = weight >= currentAvgWeight;
+        }
+    }
+    
     // Check if user hit their target (based on THIS week's target, not current)
     let hitTarget = false;
     let kcalDiff = 0;
@@ -94,7 +128,7 @@ const DayCard: React.FC<DayCardProps> = ({
         }
     }
     
-    // Determine card styling based on status
+    // Determine card styling based on status - cards always white, inputs show status
     const getCardStyle = () => {
         if (isToday) {
             return {
@@ -104,33 +138,33 @@ const DayCard: React.FC<DayCardProps> = ({
             };
         }
         
-        if (hasKcal) {
+        if (hasKcal && weeklyTarget > 0) {
             return {
-                borderColor: hitTarget ? config.test3 : '#d64545',
-                borderWidth: '2px',
-                bg: hitTarget ? config.green : config.red,
+                borderColor: hitTarget ? config.green : config.red,
+                borderWidth: '3px',
+                bg: 'white',
             };
         }
         
         if (isPast && !hasData) {
             return {
                 borderColor: config.orange,
-                borderWidth: '2px',
-                bg: config.orange,
+                borderWidth: '3px',
+                bg: 'white',
             };
         }
         
         if (isFuture) {
             return {
                 borderColor: 'gray.200',
-                borderWidth: '1px',
+                borderWidth: '3px',
                 bg: 'gray.50',
             };
         }
         
         return {
             borderColor: 'gray.200',
-            borderWidth: '1px',
+            borderWidth: '3px',
             bg: 'white',
         };
     };
@@ -207,7 +241,10 @@ const DayCard: React.FC<DayCardProps> = ({
         return null;
     };
     
+    const hasComment = day.comment && day.comment.trim().length > 0;
+    
     return (
+        <>
         <Box
             w="140px"
             maxW="140px"
@@ -227,7 +264,26 @@ const DayCard: React.FC<DayCardProps> = ({
             display="flex"
             flexDirection="column"
             overflow="hidden"
+            position="relative"
         >
+            {/* Note icon in corner */}
+            <Tooltip label={hasComment ? day.comment : 'Add note'} placement="top" hasArrow>
+                <IconButton
+                    aria-label="Add note"
+                    icon={hasComment ? <MessageSquareText size={14} /> : <StickyNote size={14} />}
+                    size="xs"
+                    variant="ghost"
+                    position="absolute"
+                    top={1}
+                    right={1}
+                    minW="24px"
+                    h="24px"
+                    color={hasComment ? config.test5 : 'gray.400'}
+                    onClick={handleOpenNote}
+                    _hover={{ color: config.test5, bg: 'gray.100' }}
+                />
+            </Tooltip>
+            
             {/* Day header - fixed height */}
             <VStack spacing={2} mb={2} flexShrink={0} minH="60px" align="center">
                 <Text fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase" letterSpacing="wide">
@@ -246,7 +302,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 <Box w="100%">
                     <Text fontSize="xs" color="gray.500" mb={0} lineHeight="1">Calories</Text>
                     <InputGroup size="sm">
-                        <InputLeftAddon bg="white" borderColor="gray.200" minW="28px" h="30px" alignItems="center" justifyContent="center">
+                        <InputLeftAddon bg="white" borderColor="gray.200" minW="28px" h="36px" alignItems="center" justifyContent="center">
                             <Tooltip
                                 label={
                                     showPasteCalories ? 'Paste calories here' :
@@ -281,24 +337,25 @@ const DayCard: React.FC<DayCardProps> = ({
                             value={day.kcal === '' ? '' : day.kcal}
                             onChange={(e) => handleChange('kcal', e)}
                             isReadOnly={!isEditable}
-                            bg={isEditable ? 'white' : config.backgroundNav}
+                            bg={!isEditable ? config.backgroundNav : hasKcal && weeklyTarget > 0 ? (hitTarget ? config.green : config.red) : 'white'}
                             borderColor="gray.200"
                             _hover={{ borderColor: isEditable ? config.test3 : 'gray.200' }}
                             _focus={{ borderColor: config.test5, boxShadow: `0 0 0 1px ${config.test5}` }}
                             textAlign="center"
-                            fontWeight="semibold"
+                            fontWeight="bold"
                             cursor={!isEditable ? 'not-allowed' : 'text'}
-                            fontSize="xs"
-                            h="30px"
+                            fontSize="14px"
+                            h="36px"
+                            transition="background-color 0.2s ease"
                         />
-                        <InputRightAddon p={0} h="30px" w="20px" bg="white" borderColor="gray.200" display="flex" flexDirection="column">
+                        <InputRightAddon p={0} h="36px" w="20px" bg="white" borderColor="gray.200" display="flex" flexDirection="column">
                             <IconButton
                                 aria-label="Increase calories"
                                 icon={<ChevronUp size={12} />}
                                 size="xs"
                                 variant="ghost"
                                 minW="20px"
-                                h="15px"
+                                h="18px"
                                 isDisabled={!isEditable}
                                 onClick={() => handleKcalStep(10)}
                             />
@@ -308,7 +365,7 @@ const DayCard: React.FC<DayCardProps> = ({
                                 size="xs"
                                 variant="ghost"
                                 minW="20px"
-                                h="15px"
+                                h="18px"
                                 isDisabled={!isEditable}
                                 onClick={() => handleKcalStep(-10)}
                             />
@@ -318,7 +375,7 @@ const DayCard: React.FC<DayCardProps> = ({
                 <Box w="100%">
                     <Text fontSize="xs" color="gray.500" mb={0} lineHeight="1">Weight</Text>
                     <InputGroup size="sm">
-                        <InputLeftAddon bg="white" borderColor="gray.200" minW="28px" h="30px" alignItems="center" justifyContent="center">
+                        <InputLeftAddon bg="white" borderColor="gray.200" minW="28px" h="36px" alignItems="center" justifyContent="center">
                             <Tooltip
                                 label={
                                     showPasteWeight ? 'Paste weight here' :
@@ -354,24 +411,25 @@ const DayCard: React.FC<DayCardProps> = ({
                             value={day.kg === '' ? '' : day.kg}
                             onChange={(e) => handleChange('kg', e)}
                             isReadOnly={!isEditable}
-                            bg={isEditable ? 'white' : config.backgroundNav}
+                            bg={!isEditable ? config.backgroundNav : hasWeight && currentAvgWeight > 0 ? (weightOnTarget ? config.green : config.red) : 'white'}
                             borderColor="gray.200"
                             _hover={{ borderColor: isEditable ? config.test3 : 'gray.200' }}
                             _focus={{ borderColor: config.test5, boxShadow: `0 0 0 1px ${config.test5}` }}
                             textAlign="center"
-                            fontWeight="semibold"
+                            fontWeight="bold"
                             cursor={!isEditable ? 'not-allowed' : 'text'}
-                            fontSize="xs"
-                            h="30px"
+                            fontSize="14px"
+                            h="36px"
+                            transition="background-color 0.2s ease"
                         />
-                        <InputRightAddon p={0} h="30px" w="20px" bg="white" borderColor="gray.200" display="flex" flexDirection="column">
+                        <InputRightAddon p={0} h="36px" w="20px" bg="white" borderColor="gray.200" display="flex" flexDirection="column">
                             <IconButton
                                 aria-label="Increase weight"
                                 icon={<ChevronUp size={12} />}
                                 size="xs"
                                 variant="ghost"
                                 minW="20px"
-                                h="15px"
+                                h="18px"
                                 isDisabled={!isEditable}
                                 onClick={() => handleWeightStep(0.1)}
                             />
@@ -381,7 +439,7 @@ const DayCard: React.FC<DayCardProps> = ({
                                 size="xs"
                                 variant="ghost"
                                 minW="20px"
-                                h="15px"
+                                h="18px"
                                 isDisabled={!isEditable}
                                 onClick={() => handleWeightStep(-0.1)}
                             />
@@ -397,6 +455,39 @@ const DayCard: React.FC<DayCardProps> = ({
                 </Text>
             </Flex>
         </Box>
+        
+        {/* Note Modal */}
+        <Modal isOpen={isNoteOpen} onClose={onNoteClose} isCentered size="sm">
+            <ModalOverlay />
+            <ModalContent>
+                <ModalHeader fontSize="md">
+                    Note for {format(dayDate, 'EEE, MMM d')}
+                </ModalHeader>
+                <ModalBody>
+                    <Textarea
+                        value={noteValue}
+                        onChange={(e) => setNoteValue(e.target.value)}
+                        placeholder="Add a note for this day..."
+                        rows={4}
+                        resize="vertical"
+                    />
+                </ModalBody>
+                <ModalFooter gap={2}>
+                    <Button variant="ghost" onClick={onNoteClose}>
+                        Cancel
+                    </Button>
+                    <Button 
+                        bg={config.test5} 
+                        color="white" 
+                        _hover={{ opacity: 0.9 }}
+                        onClick={handleSaveNote}
+                    >
+                        Save
+                    </Button>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
+        </>
     );
 };
 

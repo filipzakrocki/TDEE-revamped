@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { Box, Flex, Spinner, Center, Slide, useBreakpointValue } from '@chakra-ui/react';
+import { Box, Flex, Spinner, Center, useBreakpointValue } from '@chakra-ui/react';
 import { useAuth } from './stores/auth/authStore';
 import { config } from './config';
 import Sidenav from './components/layout/Sidenav';
@@ -48,32 +48,31 @@ const PrivateLayout = (): JSX.Element => {
               </Tile>
             </Box>
           </Box>
-          <Box
+          <Flex
             flex={1}
             minW={0}
             h="100%"
             pt={{ base: 2, [MOBILE_BREAKPOINT]: config.padding }}
-            pb={config.padding}
+            pb={{ base: 0, [MOBILE_BREAKPOINT]: config.padding }}
             px={{ base: config.layoutGutter, [MOBILE_BREAKPOINT]: 0 }}
             color={config.black}
-            display="flex"
             flexDirection="column"
             minH={0}
             transition="flex 0.3s ease"
           >
-            <Box flex={1} minH={0} overflow="hidden" overflowX="hidden" mb={{ base: config.mobileBottomNavMb, [MOBILE_BREAKPOINT]: 0 }}>
+            <Box flex={1} minH={0} overflow="hidden" overflowX="hidden">
               <Tile bg={config.backgroundNav} height="100%">
                 <Suspense fallback={<MainPanelFallback />}>
                   <Outlet />
                 </Suspense>
               </Tile>
             </Box>
-            <Slide in={isMobile} direction="bottom" unmountOnExit>
-              <Box flexShrink={0} px={config.layoutGutter}>
+            {isMobile && (
+              <Box flexShrink={0} mt={2}>
                 <HorizontalNav />
               </Box>
-            </Slide>
-          </Box>
+            )}
+          </Flex>
         </Flex>
       <Box flex={1} minW={config.layoutGutter} aria-hidden display={{ base: 'none', [MOBILE_BREAKPOINT]: 'block' }} />
     </Flex>

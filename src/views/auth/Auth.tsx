@@ -98,15 +98,20 @@ function Auth() {
                     />
                 </FormControl>
                 {isRegistering && (
-                    <FormControl mt={4}>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <Input
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Confirm Password"
-                            type="password"
-                        />
-                    </FormControl>
+                    <>
+                        <Text fontSize="xs" color="gray.500" mt={2}>
+                            Your email can be fake — I will never send you any messages.
+                        </Text>
+                        <FormControl mt={4}>
+                            <FormLabel>Confirm Password</FormLabel>
+                            <Input
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Confirm Password"
+                                type="password"
+                            />
+                        </FormControl>
+                    </>
                 )}
                 <Box display='flex' justifyContent='space-between' alignItems='center'>
                     <Button colorScheme='teal' variant='link' mt={4} onClick={toggleForm}>

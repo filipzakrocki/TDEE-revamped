@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { Flex, IconButton, Tooltip, Link, Box, Text } from '@chakra-ui/react';
-import { Coffee } from 'lucide-react';
+import { Coffee, Save } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { config } from '../../config';
+import { useAuth } from '../../stores/auth/authStore';
 import LogoutConfirmModal from './LogoutConfirmModal';
+import SignUpSaveModal from './SignUpSaveModal';
 
 const PAYPAL_LINK = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=filipzakrocki@gmail.com&item_name=TDEE+Calculator+Support&currency_code=EUR";
 
 const HorizontalNav: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isGuest } = useAuth();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [signUpModalOpen, setSignUpModalOpen] = useState(false);
   const menuItems = config.menuItems;
 
   const white = config.backgroundColor;
@@ -18,7 +22,11 @@ const HorizontalNav: React.FC = () => {
 
   const handleNavClick = (route: string) => {
     if (route === '/logout') {
-      setLogoutModalOpen(true);
+      if (isGuest) {
+        setSignUpModalOpen(true);
+      } else {
+        setLogoutModalOpen(true);
+      }
     } else {
       navigate(route);
     }
@@ -47,15 +55,25 @@ const HorizontalNav: React.FC = () => {
         onClose={() => setLogoutModalOpen(false)}
         onConfirm={handleLogoutConfirm}
       />
+      <SignUpSaveModal
+        isOpen={signUpModalOpen}
+        onClose={() => setSignUpModalOpen(false)}
+      />
       <Flex w="100%" align="center" justify="space-evenly">
         {menuItems.map((item, index) => {
+          const isLogoutItem = item.route === '/logout';
           const isSelected = location.pathname === item.route;
+          
+          // For guests, show Save icon instead of Logout
+          const DisplayIcon = isLogoutItem && isGuest ? Save : item.icon;
+          const displayLabel = isLogoutItem && isGuest ? 'Save' : item.label;
+          
           return (
-            <Tooltip key={index} label={item.label} placement="top" fontSize="xs">
+            <Tooltip key={index} label={displayLabel} placement="top" fontSize="xs">
               <Box as="span" flexShrink={0}>
                 <IconButton
-                  icon={<item.icon size={22} />}
-                  aria-label={item.label}
+                  icon={<DisplayIcon size={22} />}
+                  aria-label={displayLabel}
                   onClick={() => handleNavClick(item.route)}
                   bg={isSelected ? black : white}
                   color={isSelected ? white : black}

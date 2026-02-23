@@ -34,7 +34,7 @@ import {
     Bar,
     Cell,
     ComposedChart,
-    Area,
+    Brush,
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, addDays, getDay } from 'date-fns';
@@ -52,6 +52,7 @@ const Analysis: React.FC = () => {
         startWeight,
         goalWeight,
         isMetricSystem,
+        weeklyChange,
     } = useCalc();
 
     const needsSetup = !startDate || startWeight === 0 || goalWeight === 0;
@@ -73,13 +74,21 @@ const Analysis: React.FC = () => {
     const [showCalories, setShowCalories] = useState(true);
     const [showTdee, setShowTdee] = useState(true);
     const [showWeight, setShowWeight] = useState(true);
+    const [showProjectedWeight, setShowProjectedWeight] = useState(true);
     
     // Heatmap view mode
     const [heatmapView, setHeatmapView] = useState<'monthly' | 'yearly'>('monthly');
 
+    // Calculate how many weeks until goal from start weight
+    const weeksToGoalFromStart = useMemo(() => {
+        if (!startWeight || !goalWeight || !weeklyChange || weeklyChange === 0) return 0;
+        const weightDiff = Math.abs(startWeight - goalWeight);
+        return Math.ceil(weightDiff / weeklyChange);
+    }, [startWeight, goalWeight, weeklyChange]);
+
     // Build daily data for charts
     const dailyData = useMemo(() => {
-        if (!startDate || displayWeeks.length === 0) return [];
+        if (!startDate) return [];
 
         const data: Array<{
             date: string;
@@ -87,31 +96,59 @@ const Analysis: React.FC = () => {
             week: number;
             kcal: number | null;
             weight: number | null;
-            target: number;
-            tdee: number;
+            projectedWeight: number | null;
+            target: number | null;
+            tdee: number | null;
         }> = [];
 
-        displayWeeks.forEach(week => {
-            const weekCalc = weekCalculations.find(w => w.weekNumber === week.week);
+        const existingWeeks = displayWeeks.length;
+        const existingDays = existingWeeks * 7;
+        // Extend chart to show full projected weight journey if enabled
+        const totalDays = showProjectedWeight 
+            ? Math.max(existingDays, weeksToGoalFromStart * 7)
+            : existingDays;
+
+        for (let dayNum = 0; dayNum < totalDays; dayNum++) {
+            const weekNumber = Math.floor(dayNum / 7) + 1;
+            const dayIndex = dayNum % 7;
+            const dayDate = addDays(parseISO(startDate), dayNum);
+            
+            const isInExistingRange = dayNum < existingDays;
+            const week = displayWeeks.find(w => w.week === weekNumber);
+            const weekCalc = weekCalculations.find(w => w.weekNumber === weekNumber);
             const weekTarget = weekCalc?.weeklyTarget || recommendedDailyIntake;
             const weekTdee = weekCalc?.weeklyTdee || currentTdee;
-
-            week.days.forEach((day, dayIndex) => {
-                const dayDate = addDays(parseISO(startDate), (week.week - 1) * 7 + dayIndex);
-                data.push({
-                    date: format(dayDate, 'yyyy-MM-dd'),
-                    dateLabel: format(dayDate, 'MMM d'),
-                    week: week.week,
-                    kcal: day.kcal !== '' && day.kcal !== 0 ? Number(day.kcal) : null,
-                    weight: day.kg !== '' && day.kg !== 0 ? Number(day.kg) : null,
-                    target: weekTarget,
-                    tdee: weekTdee > 0 ? weekTdee : currentTdee,
-                });
+            
+            const day = week?.days[dayIndex];
+            
+            // Calculate projected weight - based on start weight and weekly change rate
+            let projectedWeight: number | null = null;
+            if (startWeight > 0 && weeklyChange > 0 && goalWeight > 0) {
+                // Week 0 = start weight, then decrease/increase by weeklyChange each week
+                const weeksCompleted = Math.floor(dayNum / 7);
+                if (isWeightLoss) {
+                    projectedWeight = Math.max(goalWeight, startWeight - (weeksCompleted * weeklyChange));
+                } else {
+                    projectedWeight = Math.min(goalWeight, startWeight + (weeksCompleted * weeklyChange));
+                }
+            }
+            
+            data.push({
+                date: format(dayDate, 'yyyy-MM-dd'),
+                dateLabel: format(dayDate, 'MMM d'),
+                week: weekNumber,
+                // Only include actual data for existing weeks
+                kcal: isInExistingRange && day && day.kcal !== '' && day.kcal !== 0 ? Number(day.kcal) : null,
+                weight: isInExistingRange && day && day.kg !== '' && day.kg !== 0 ? Number(day.kg) : null,
+                target: isInExistingRange ? weekTarget : null,
+                tdee: isInExistingRange ? (weekTdee > 0 ? weekTdee : currentTdee) : null,
+                // Projected weight from start date based on plan
+                projectedWeight,
             });
-        });
+        }
 
         return data;
-    }, [displayWeeks, startDate, weekCalculations, recommendedDailyIntake, currentTdee]);
+    }, [displayWeeks, startDate, weekCalculations, recommendedDailyIntake, currentTdee, startWeight, goalWeight, weeklyChange, weeksToGoalFromStart, isWeightLoss, showProjectedWeight]);
 
     // Weekly summary data for bar chart
     const weeklyData = useMemo(() => {
@@ -148,7 +185,7 @@ const Analysis: React.FC = () => {
         let totalKcalDiff = 0;
 
         dailyData.forEach(day => {
-            if (day.kcal !== null) {
+            if (day.kcal !== null && day.target !== null) {
                 totalDays++;
                 const diff = day.kcal - day.target;
                 totalKcalDiff += diff;
@@ -197,7 +234,7 @@ const Analysis: React.FC = () => {
             
             if (date > today) {
                 status = 'future';
-            } else if (day.kcal !== null) {
+            } else if (day.kcal !== null && day.target !== null) {
                 if (isWeightLoss) {
                     status = day.kcal <= day.target ? 'hit' : 'miss';
                 } else {
@@ -268,7 +305,7 @@ const Analysis: React.FC = () => {
             
             if (date > today) {
                 status = 'future';
-            } else if (day.kcal !== null) {
+            } else if (day.kcal !== null && day.target !== null) {
                 if (isWeightLoss) {
                     status = day.kcal <= day.target ? 'hit' : 'miss';
                 } else {
@@ -362,23 +399,6 @@ const Analysis: React.FC = () => {
             
             {/* Summary Stats */}
             <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4} mb={6}>
-                <Card bg="white" shadow="sm">
-                    <CardBody py={3} px={4}>
-                        <Stat size="sm">
-                            <HStack spacing={2} mb={1}>
-                                <Calendar size={16} color={config.test5} />
-                                <StatLabel fontSize="xs" color="gray.500">Days Tracked</StatLabel>
-                            </HStack>
-                            <StatNumber fontSize="xl" color={config.black}>
-                                {complianceStats.totalDays}
-                            </StatNumber>
-                            <StatHelpText fontSize="xs" mb={0}>
-                                {displayWeeks.length} week{displayWeeks.length > 1 ? 's' : ''}
-                            </StatHelpText>
-                        </Stat>
-                    </CardBody>
-                </Card>
-
                 <Card bg={config.test5} color="white" shadow="sm">
                     <CardBody py={3} px={4}>
                         <Stat size="sm">
@@ -391,6 +411,23 @@ const Analysis: React.FC = () => {
                             </StatNumber>
                             <StatHelpText fontSize="xs" mb={0} opacity={0.9}>
                                 {complianceStats.daysOnTarget}/{complianceStats.totalDays} days
+                            </StatHelpText>
+                        </Stat>
+                    </CardBody>
+                </Card>
+
+                <Card bg="white" shadow="sm">
+                    <CardBody py={3} px={4}>
+                        <Stat size="sm">
+                            <HStack spacing={2} mb={1}>
+                                <Calendar size={16} color={config.test5} />
+                                <StatLabel fontSize="xs" color="gray.500">Days Tracked</StatLabel>
+                            </HStack>
+                            <StatNumber fontSize="xl" color={config.black}>
+                                {complianceStats.totalDays}
+                            </StatNumber>
+                            <StatHelpText fontSize="xs" mb={0}>
+                                {displayWeeks.length} week{displayWeeks.length > 1 ? 's' : ''}
                             </StatHelpText>
                         </Stat>
                     </CardBody>
@@ -440,99 +477,128 @@ const Analysis: React.FC = () => {
                         <Heading size="sm" color={config.black}>Progress Over Time</Heading>
                         <ButtonGroup size="xs" isAttached variant="outline">
                             <Button
-                                onClick={() => setShowTarget(!showTarget)}
-                                bg={showTarget ? config.test2 : 'transparent'}
-                                borderColor={config.test5}
-                                color={showTarget ? config.test5 : 'gray.400'}
-                                _hover={{ bg: config.test2 }}
+                                onClick={() => setShowCalories(!showCalories)}
+                                bg={showCalories ? '#EEF2FF' : 'transparent'}
+                                borderColor="#6366F1"
+                                color={showCalories ? '#6366F1' : 'gray.400'}
+                                _hover={{ bg: '#EEF2FF' }}
                             >
-                                Target
+                                Kcal
                             </Button>
                             <Button
-                                onClick={() => setShowCalories(!showCalories)}
-                                bg={showCalories ? '#e8e4f8' : 'transparent'}
-                                borderColor="#8884d8"
-                                color={showCalories ? '#8884d8' : 'gray.400'}
-                                _hover={{ bg: '#e8e4f8' }}
+                                onClick={() => setShowTarget(!showTarget)}
+                                bg={showTarget ? '#FFF1F2' : 'transparent'}
+                                borderColor="#FB7185"
+                                color={showTarget ? '#E11D48' : 'gray.400'}
+                                _hover={{ bg: '#FFF1F2' }}
                             >
-                                Calories
+                                Kcal Target
                             </Button>
                             <Button
                                 onClick={() => setShowTdee(!showTdee)}
-                                bg={showTdee ? '#fff0e0' : 'transparent'}
-                                borderColor="#ff7300"
-                                color={showTdee ? '#ff7300' : 'gray.400'}
-                                _hover={{ bg: '#fff0e0' }}
+                                bg={showTdee ? '#FEF3C7' : 'transparent'}
+                                borderColor="#F59E0B"
+                                color={showTdee ? '#D97706' : 'gray.400'}
+                                _hover={{ bg: '#FEF3C7' }}
                             >
                                 TDEE
                             </Button>
                             <Button
                                 onClick={() => setShowWeight(!showWeight)}
-                                bg={showWeight ? '#e0f5e8' : 'transparent'}
-                                borderColor="#82ca9d"
-                                color={showWeight ? '#82ca9d' : 'gray.400'}
-                                _hover={{ bg: '#e0f5e8' }}
+                                bg={showWeight ? '#D1FAE5' : 'transparent'}
+                                borderColor="#10B981"
+                                color={showWeight ? '#059669' : 'gray.400'}
+                                _hover={{ bg: '#D1FAE5' }}
                             >
                                 Weight
+                            </Button>
+                            <Button
+                                onClick={() => setShowProjectedWeight(!showProjectedWeight)}
+                                bg={showProjectedWeight ? '#D1FAE5' : 'transparent'}
+                                borderColor="#10B981"
+                                color={showProjectedWeight ? '#059669' : 'gray.400'}
+                                _hover={{ bg: '#D1FAE5' }}
+                            >
+                                Goal
                             </Button>
                         </ButtonGroup>
                     </Flex>
                 </CardHeader>
                 <CardBody>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <ComposedChart data={dailyData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <ResponsiveContainer width="100%" height={350}>
+                        <ComposedChart data={dailyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                             <XAxis 
                                 dataKey="dateLabel" 
-                                tick={{ fontSize: 11 }}
+                                tick={{ fontSize: 11, fill: '#666' }}
+                                tickLine={{ stroke: '#e0e0e0' }}
+                                axisLine={{ stroke: '#e0e0e0' }}
                                 interval="preserveStartEnd"
                             />
                             <YAxis 
                                 yAxisId="left"
-                                tick={{ fontSize: 11 }}
+                                tick={{ fontSize: 11, fill: '#666' }}
+                                tickLine={{ stroke: '#e0e0e0' }}
+                                axisLine={{ stroke: '#e0e0e0' }}
                                 domain={['dataMin - 200', 'dataMax + 200']}
-                                label={{ value: 'kcal', angle: -90, position: 'insideLeft', fontSize: 11 }}
+                                label={{ value: 'kcal', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#999' }}
                             />
-                            {showWeight && (
+                            {(showWeight || showProjectedWeight) && (
                                 <YAxis 
                                     yAxisId="right" 
                                     orientation="right"
-                                    tick={{ fontSize: 11 }}
+                                    tick={{ fontSize: 11, fill: '#666' }}
+                                    tickLine={{ stroke: '#e0e0e0' }}
+                                    axisLine={{ stroke: '#e0e0e0' }}
                                     domain={['dataMin - 1', 'dataMax + 1']}
-                                    label={{ value: weightUnit, angle: 90, position: 'insideRight', fontSize: 11 }}
+                                    label={{ value: weightUnit, angle: 90, position: 'insideRight', fontSize: 11, fill: '#999' }}
                                 />
                             )}
                             <RechartsTooltip 
-                                contentStyle={{ fontSize: 12 }}
+                                contentStyle={{ 
+                                    fontSize: 14, 
+                                    backgroundColor: 'rgba(255,255,255,0.96)',
+                                    border: '1px solid #e0e0e0',
+                                    borderRadius: 6,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}
+                                labelStyle={{
+                                    fontWeight: 700,
+                                    fontSize: 15,
+                                    marginBottom: 4
+                                }}
                                 formatter={(value: any, name: string) => {
-                                    if (name === 'Weight' && value) return [`${value} ${weightUnit}`, name];
-                                    if (value) return [`${value} kcal`, name];
-                                    return ['-', name];
+                                    if ((name === 'Weight' || name === 'Goal') && value) return [<span style={{ fontWeight: 600, fontSize: 14 }}>{Number(value).toFixed(1)} {weightUnit}</span>, name];
+                                    if (value) return [<span style={{ fontWeight: 600, fontSize: 14 }}>{Math.round(value)} kcal</span>, name];
+                                    return [<span style={{ fontWeight: 600, fontSize: 14 }}>-</span>, name];
                                 }}
                             />
                             <Legend wrapperStyle={{ fontSize: 12 }} />
-                            {showTarget && (
-                                <Area
+                            <Brush 
+                                dataKey="dateLabel"
+                                height={30}
+                                stroke="#6366F1"
+                                fill="#f8f9fa"
+                                tickFormatter={(value) => value}
+                            />
+                            {showCalories && (
+                                <Bar
                                     yAxisId="left"
-                                    type="monotone"
-                                    dataKey="target"
-                                    name="Target"
-                                    fill={config.test2}
-                                    stroke={config.test5}
-                                    strokeWidth={2}
-                                    fillOpacity={0.3}
+                                    dataKey="kcal"
+                                    name="Kcal"
+                                    fill="#6366F1"
+                                    radius={[3, 3, 0, 0]}
                                 />
                             )}
-                            {showCalories && (
+                            {showTarget && (
                                 <Line
                                     yAxisId="left"
-                                    type="monotone"
-                                    dataKey="kcal"
-                                    name="Calories"
-                                    stroke="#8884d8"
-                                    strokeWidth={2}
-                                    dot={{ r: 3 }}
-                                    connectNulls
+                                    type="stepAfter"
+                                    dataKey="target"
+                                    name="Kcal Target"
+                                    stroke="#FB7185"
+                                    strokeWidth={4}
+                                    dot={false}
                                 />
                             )}
                             {showTdee && (
@@ -541,9 +607,9 @@ const Analysis: React.FC = () => {
                                     type="monotone"
                                     dataKey="tdee"
                                     name="TDEE"
-                                    stroke="#ff7300"
-                                    strokeWidth={2}
-                                    strokeDasharray="5 5"
+                                    stroke="#F59E0B"
+                                    strokeWidth={4}
+                                    dot={false}
                                 />
                             )}
                             {showWeight && (
@@ -552,10 +618,23 @@ const Analysis: React.FC = () => {
                                     type="monotone"
                                     dataKey="weight"
                                     name="Weight"
-                                    stroke="#82ca9d"
-                                    strokeWidth={2}
-                                    dot={{ r: 3 }}
+                                    stroke="#10B981"
+                                    strokeWidth={4}
+                                    dot={{ r: 5, fill: '#10B981', strokeWidth: 2, stroke: '#fff' }}
                                     connectNulls
+                                />
+                            )}
+                            {showProjectedWeight && (
+                                <Line
+                                    yAxisId="right"
+                                    type="stepAfter"
+                                    dataKey="projectedWeight"
+                                    name="Goal"
+                                    stroke="#10B981"
+                                    strokeWidth={4}
+                                    strokeDasharray="8 4"
+                                    dot={false}
+                                    opacity={0.6}
                                 />
                             )}
                         </ComposedChart>
@@ -594,7 +673,7 @@ const Analysis: React.FC = () => {
                                     />
                                 ))}
                             </Bar>
-                            <Bar dataKey="target" name="Target" fill={config.test2} />
+                            <Bar dataKey="target" name="Calories Target" fill={config.test2} />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardBody>

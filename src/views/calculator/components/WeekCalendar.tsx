@@ -18,7 +18,7 @@ import {
     AlertDialogOverlay,
     useDisclosure,
 } from '@chakra-ui/react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageSquareText } from 'lucide-react';
 import { 
     format, 
     addDays, 
@@ -97,7 +97,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
     
     // Build a map of date -> day data for quick lookup
     const dateDataMap = useMemo(() => {
-        const map = new Map<string, { weekNumber: number; dayIndex: number; data: { kg: number | ''; kcal: number | '' }; locked: boolean; weeklyTarget: number }>();
+        const map = new Map<string, { weekNumber: number; dayIndex: number; data: { kg: number | ''; kcal: number | ''; comment?: string }; locked: boolean; weeklyTarget: number }>();
         
         if (!startDate) return map;
         
@@ -132,6 +132,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
         
         const hasData = dayInfo && ((dayInfo.data.kcal !== '' && dayInfo.data.kcal !== 0) || (dayInfo.data.kg !== '' && dayInfo.data.kg !== 0));
         const hasKcal = dayInfo && dayInfo.data.kcal !== '' && dayInfo.data.kcal !== 0;
+        const hasComment = dayInfo && dayInfo.data.comment && dayInfo.data.comment.trim().length > 0;
         
         // Check if user hit their target (using THAT WEEK's target, not current)
         let hitTarget = false;
@@ -144,7 +145,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
             }
         }
         
-        return { isToday, isPast, isFuture, isInRange, hasData, hasKcal, hitTarget, dayInfo };
+        return { isToday, isPast, isFuture, isInRange, hasData, hasKcal, hasComment, hitTarget, dayInfo };
     };
     
     // Last day currently in range (for "add weeks until" only)
@@ -247,8 +248,43 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
     
     return (
         <Box bg="white" borderRadius="xl" p={4} borderWidth="1px" borderColor="gray.100">
-            {/* Header: left = Mon/Diet Start, center = selector, right = Month/Year toggle */}
-            <Flex justify="space-between" align="center" mb={4}>
+            {/* Mobile Header: selector on top, buttons below centered */}
+            <VStack spacing={3} mb={4} display={{ base: 'flex', md: 'none' }}>
+                <Flex justify="center" align="center" gap={2} w="100%">
+                    {viewMode === 'month' ? (
+                        <>
+                            <IconButton icon={<ChevronLeft size={20} />} aria-label="Previous month" variant="ghost" size="sm" onClick={handlePreviousMonth} isDisabled={!canGoPreviousMonth} />
+                            <Text fontSize="lg" fontWeight="bold" color={config.black} minW="140px" textAlign="center">
+                                {format(viewMonth, 'MMMM yyyy')}
+                            </Text>
+                            <IconButton icon={<ChevronRight size={20} />} aria-label="Next month" variant="ghost" size="sm" onClick={handleNextMonth} />
+                        </>
+                    ) : (
+                        <>
+                            <IconButton icon={<ChevronLeft size={20} />} aria-label="Previous year" variant="ghost" size="sm" onClick={() => setViewMonth(prev => subMonths(prev, 12))} />
+                            <Text fontSize="lg" fontWeight="bold" color={config.black} minW="80px" textAlign="center">
+                                {viewYear}
+                            </Text>
+                            <IconButton icon={<ChevronRight size={20} />} aria-label="Next year" variant="ghost" size="sm" onClick={() => setViewMonth(prev => addMonths(prev, 12))} />
+                        </>
+                    )}
+                </Flex>
+                <HStack spacing={2} justify="center">
+                    <Tooltip label={weekStartsMonday ? `Switch to diet week start (${format(dietStartDate, 'EEEE')})` : 'Switch to Monday start'} placement="bottom" isDisabled>
+                        <Button size="sm" variant="ghost" colorScheme="gray" bg="gray.100" onClick={toggleCalendarWeekStart} fontSize="xs">
+                            {weekStartsMonday ? 'Mon Start' : 'Diet Start'}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip label={viewMode === 'month' ? 'Switch to yearly view' : 'Switch to monthly view'} placement="bottom" isDisabled>
+                        <Button size="sm" variant="ghost" colorScheme="gray" bg="gray.100" onClick={() => setViewMode(m => m === 'month' ? 'year' : 'month')} fontSize="xs">
+                            {viewMode === 'month' ? 'Monthly' : 'Yearly'}
+                        </Button>
+                    </Tooltip>
+                </HStack>
+            </VStack>
+
+            {/* Desktop Header: buttons on sides, selector in center */}
+            <Flex justify="space-between" align="center" mb={4} display={{ base: 'none', md: 'flex' }}>
                 <Flex flex={1} justify="flex-start">
                     <Tooltip label={weekStartsMonday ? `Switch to diet week start (${format(dietStartDate, 'EEEE')})` : 'Switch to Monday start'} placement="right" isDisabled>
                         <Button size="sm" variant="ghost" colorScheme="gray" bg="gray.100" onClick={toggleCalendarWeekStart} fontSize="xs">
@@ -366,7 +402,13 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
                                                     onClick={() => handleCellClick(date, status.isInRange, isCurrentYear)}
                                                     _hover={(status.isInRange || extendable) && isCurrentYear ? { shadow: 'sm' } : {}}
                                                     opacity={isCurrentYear ? 1 : 0.5}
+                                                    position="relative"
                                                 >
+                                                    {status.hasComment && (
+                                                        <Box position="absolute" top={0.5} right={0.5}>
+                                                            <MessageSquareText size={10} color={config.test5} />
+                                                        </Box>
+                                                    )}
                                                     <Text fontSize="xs" fontWeight="medium" color={textColor}>
                                                         {format(date, 'MMM d')}
                                                     </Text>
@@ -446,7 +488,13 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
                                                     onClick={() => handleCellClick(date, status.isInRange, isCurrentMonth)}
                                                     _hover={(status.isInRange || extendableMonth) && isCurrentMonth ? { shadow: 'sm' } : {}}
                                                     opacity={isCurrentMonth ? 1 : 0.5}
+                                                    position="relative"
                                                 >
+                                                    {status.hasComment && (
+                                                        <Box position="absolute" top={0.5} right={0.5}>
+                                                            <MessageSquareText size={10} color={config.test5} />
+                                                        </Box>
+                                                    )}
                                                     <Text fontSize="xs" fontWeight="medium" color={textColor}>
                                                         {format(date, 'd')}
                                                     </Text>
