@@ -38,7 +38,7 @@ const PrivateLayout = (): JSX.Element => {
       maxH="100dvh"
       minH={0} 
       bg={config.backgroundColor}
-      pb={{ base: 'max(env(safe-area-inset-bottom, 0px), 20px)', [MOBILE_BREAKPOINT]: 0 }}
+      pb={{ base: 'max(env(safe-area-inset-bottom, 0px), 10px)', [MOBILE_BREAKPOINT]: 0 }}
     >
       <Box flex={1} minW={config.layoutGutter} aria-hidden display={{ base: 'none', [MOBILE_BREAKPOINT]: 'block' }} />
         <Flex w={config.mainPanelMaxWidth} maxW="100%" flexShrink={1} minW={0} h="100%" minH={0}>
