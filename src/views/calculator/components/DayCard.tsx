@@ -457,9 +457,9 @@ const DayCard: React.FC<DayCardProps> = ({
         </Box>
         
         {/* Note Modal */}
-        <Modal isOpen={isNoteOpen} onClose={onNoteClose} isCentered size="sm">
+        <Modal isOpen={isNoteOpen} onClose={onNoteClose} size="sm">
             <ModalOverlay />
-            <ModalContent>
+            <ModalContent mt={{ base: 4, md: 'auto' }} mb={{ base: 'auto', md: 'auto' }}>
                 <ModalHeader fontSize="md">
                     Note for {format(dayDate, 'EEE, MMM d')}
                 </ModalHeader>
