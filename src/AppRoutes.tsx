@@ -87,6 +87,7 @@ const PrivateLayout = (): JSX.Element => {
   );
 };
 
+
 const LoadingSpinner = () => (
   <Center h="100vh">
     <Spinner size="xl" color={config.test5} thickness="4px" />

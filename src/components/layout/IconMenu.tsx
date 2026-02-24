@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { VStack, IconButton, Divider, Tooltip, Link } from "@chakra-ui/react";
+import { VStack, IconButton, Divider, Tooltip } from "@chakra-ui/react";
 import { Coffee, Save } from "lucide-react";
 
 import { useLocation, useNavigate } from "react-router-dom";
@@ -7,8 +7,7 @@ import { config } from '../../config';
 import { useAuth } from '../../stores/auth/authStore';
 import LogoutConfirmModal from './LogoutConfirmModal';
 import SignUpSaveModal from './SignUpSaveModal';
-
-const PAYPAL_LINK = "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=filipzakrocki@gmail.com&item_name=TDEE+Calculator+Support&currency_code=EUR";
+import BuyMeACoffeeModal from './BuyMeACoffeeModal';
 
 const IconMenu = () => {
   const location = useLocation();
@@ -16,6 +15,7 @@ const IconMenu = () => {
   const { isGuest } = useAuth();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [signUpModalOpen, setSignUpModalOpen] = useState(false);
+  const [coffeeModalOpen, setCoffeeModalOpen] = useState(false);
   const menuItems = config.menuItems;
 
   const white = config.backgroundColor;
@@ -48,6 +48,10 @@ const IconMenu = () => {
         isOpen={signUpModalOpen}
         onClose={() => setSignUpModalOpen(false)}
       />
+      <BuyMeACoffeeModal
+        isOpen={coffeeModalOpen}
+        onClose={() => setCoffeeModalOpen(false)}
+      />
       {menuItems.map((item, index) => {
         const isLogoutItem = item.route === '/logout';
         const isSelected = location.pathname === item.route;
@@ -76,18 +80,17 @@ const IconMenu = () => {
       <Divider borderColor={config.test1} w="60%" />
 
       <Tooltip label="Buy me a coffee" placement="right" fontSize="xs">
-        <Link href={PAYPAL_LINK} isExternal>
-          <IconButton
-            icon={<Coffee size={20} />}
-            aria-label="Support via PayPal"
-            bg={config.orange}
-            color={black}
-            variant="solid"
-            isRound
-            transition="all 0.2s"
-            _hover={{ bg: config.test1, color: white }}
-          />
-        </Link>
+        <IconButton
+          icon={<Coffee size={20} />}
+          aria-label="Support (Buy me a coffee)"
+          bg={config.orange}
+          color={black}
+          variant="solid"
+          isRound
+          transition="all 0.2s"
+          _hover={{ bg: config.test1, color: white }}
+          onClick={() => setCoffeeModalOpen(true)}
+        />
       </Tooltip>
     </VStack>
   );

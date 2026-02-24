@@ -45,6 +45,13 @@ interface Config {
     menuItems: MenuItem[]
 }
 
+/** Optional donation/support links. */
+export const donationConfig = {
+    paypalLink: "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=filipzakrocki@gmail.com&item_name=TDEE+Calculator+Support&currency_code=EUR",
+    /** Replace with your Bitcoin address for the QR code. */
+    btcAddress: "bc1q385ud83c58hhjzfafmnzc9hxvc24vyl7vgct2u",
+} as const;
+
 interface MenuItem {
     icon: React.ElementType;
     route: string;
