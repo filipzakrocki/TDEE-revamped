@@ -15,7 +15,7 @@ import {
     HStack,
     Link,
 } from '@chakra-ui/react';
-import { HelpCircle, Mail, Calculator, Scale, Database, User, Rocket, Heart } from 'lucide-react';
+import { HelpCircle, Mail, Calculator, Scale, Database, User, Heart } from 'lucide-react';
 import { config } from '../../config';
 
 interface FaqItem {
@@ -49,11 +49,6 @@ const FAQ_ITEMS: FaqItem[] = [
         question: "Who created this?",
         body: "I'm just a developer who enjoys fitness, nutrition science, and building useful tools. I created this app to help with my own diet tracking and decided to share it with others who might find it helpful.",
         icon: <User size={18} />
-    },
-    {
-        question: "Will there be more features?",
-        body: "Yes! Planned features include: data visualization and charts, weight/calorie heatmaps, CSV export functionality, mobile-friendly improvements, and possibly MyFitnessPal integration. Stay tuned!",
-        icon: <Rocket size={18} />
     },
     {
         question: "How can I support this project?",

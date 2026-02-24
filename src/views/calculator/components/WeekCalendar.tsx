@@ -10,7 +10,6 @@ import {
     Grid,
     GridItem,
     Tooltip,
-    useBreakpointValue,
     AlertDialog,
     AlertDialogBody,
     AlertDialogFooter,
@@ -19,7 +18,7 @@ import {
     AlertDialogOverlay,
     useDisclosure,
 } from '@chakra-ui/react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageSquareText } from 'lucide-react';
 import { 
     format, 
     addDays, 
@@ -48,7 +47,6 @@ interface WeekCalendarProps {
 }
 
 const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
-    const isMobile = useBreakpointValue({ base: true, md: false }) ?? true;
     const { weekData, selectedWeek, selectWeek, addWeeksUntil, calendarWeekStartsOnMonday, toggleCalendarWeekStart, isMetricSystem } = useCalc();
     const [dateToAddUntil, setDateToAddUntil] = React.useState<Date | null>(null);
     const { isOpen: isAddWeeksOpen, onOpen: onAddWeeksOpen, onClose: onAddWeeksClose } = useDisclosure();
@@ -99,7 +97,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
     
     // Build a map of date -> day data for quick lookup
     const dateDataMap = useMemo(() => {
-        const map = new Map<string, { weekNumber: number; dayIndex: number; data: { kg: number | ''; kcal: number | '' }; locked: boolean; weeklyTarget: number }>();
+        const map = new Map<string, { weekNumber: number; dayIndex: number; data: { kg: number | ''; kcal: number | ''; comment?: string }; locked: boolean; weeklyTarget: number }>();
         
         if (!startDate) return map;
         
@@ -134,6 +132,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
         
         const hasData = dayInfo && ((dayInfo.data.kcal !== '' && dayInfo.data.kcal !== 0) || (dayInfo.data.kg !== '' && dayInfo.data.kg !== 0));
         const hasKcal = dayInfo && dayInfo.data.kcal !== '' && dayInfo.data.kcal !== 0;
+        const hasComment = dayInfo && dayInfo.data.comment && dayInfo.data.comment.trim().length > 0;
         
         // Check if user hit their target (using THAT WEEK's target, not current)
         let hitTarget = false;
@@ -146,7 +145,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
             }
         }
         
-        return { isToday, isPast, isFuture, isInRange, hasData, hasKcal, hitTarget, dayInfo };
+        return { isToday, isPast, isFuture, isInRange, hasData, hasKcal, hasComment, hitTarget, dayInfo };
     };
     
     // Last day currently in range (for "add weeks until" only)
@@ -249,10 +248,45 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
     
     return (
         <Box bg="white" borderRadius="xl" p={4} borderWidth="1px" borderColor="gray.100">
-            {/* Header: left = Mon/Diet Start, center = selector, right = Month/Year toggle */}
-            <Flex justify="space-between" align="center" mb={4}>
+            {/* Mobile Header: selector on top, buttons below centered */}
+            <VStack spacing={3} mb={4} display={{ base: 'flex', md: 'none' }}>
+                <Flex justify="center" align="center" gap={2} w="100%">
+                    {viewMode === 'month' ? (
+                        <>
+                            <IconButton icon={<ChevronLeft size={20} />} aria-label="Previous month" variant="ghost" size="sm" onClick={handlePreviousMonth} isDisabled={!canGoPreviousMonth} />
+                            <Text fontSize="lg" fontWeight="bold" color={config.black} minW="140px" textAlign="center">
+                                {format(viewMonth, 'MMMM yyyy')}
+                            </Text>
+                            <IconButton icon={<ChevronRight size={20} />} aria-label="Next month" variant="ghost" size="sm" onClick={handleNextMonth} />
+                        </>
+                    ) : (
+                        <>
+                            <IconButton icon={<ChevronLeft size={20} />} aria-label="Previous year" variant="ghost" size="sm" onClick={() => setViewMonth(prev => subMonths(prev, 12))} />
+                            <Text fontSize="lg" fontWeight="bold" color={config.black} minW="80px" textAlign="center">
+                                {viewYear}
+                            </Text>
+                            <IconButton icon={<ChevronRight size={20} />} aria-label="Next year" variant="ghost" size="sm" onClick={() => setViewMonth(prev => addMonths(prev, 12))} />
+                        </>
+                    )}
+                </Flex>
+                <HStack spacing={2} justify="center">
+                    <Tooltip label={weekStartsMonday ? `Switch to diet week start (${format(dietStartDate, 'EEEE')})` : 'Switch to Monday start'} placement="bottom" isDisabled>
+                        <Button size="sm" variant="ghost" colorScheme="gray" bg="gray.100" onClick={toggleCalendarWeekStart} fontSize="xs">
+                            {weekStartsMonday ? 'Mon Start' : 'Diet Start'}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip label={viewMode === 'month' ? 'Switch to yearly view' : 'Switch to monthly view'} placement="bottom" isDisabled>
+                        <Button size="sm" variant="ghost" colorScheme="gray" bg="gray.100" onClick={() => setViewMode(m => m === 'month' ? 'year' : 'month')} fontSize="xs">
+                            {viewMode === 'month' ? 'Monthly' : 'Yearly'}
+                        </Button>
+                    </Tooltip>
+                </HStack>
+            </VStack>
+
+            {/* Desktop Header: buttons on sides, selector in center */}
+            <Flex justify="space-between" align="center" mb={4} display={{ base: 'none', md: 'flex' }}>
                 <Flex flex={1} justify="flex-start">
-                    <Tooltip label={weekStartsMonday ? `Switch to diet week start (${format(dietStartDate, 'EEEE')})` : 'Switch to Monday start'} placement="right">
+                    <Tooltip label={weekStartsMonday ? `Switch to diet week start (${format(dietStartDate, 'EEEE')})` : 'Switch to Monday start'} placement="right" isDisabled>
                         <Button size="sm" variant="ghost" colorScheme="gray" bg="gray.100" onClick={toggleCalendarWeekStart} fontSize="xs">
                             {weekStartsMonday ? 'Mon Start' : 'Diet Start'}
                         </Button>
@@ -278,12 +312,32 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
                     )}
                 </Flex>
                 <Flex flex={1} justify="flex-end">
-                    <Tooltip label={viewMode === 'month' ? 'Switch to yearly view' : 'Switch to monthly view'} placement="left">
+                    <Tooltip label={viewMode === 'month' ? 'Switch to yearly view' : 'Switch to monthly view'} placement="left" isDisabled>
                         <Button size="sm" variant="ghost" colorScheme="gray" bg="gray.100" onClick={() => setViewMode(m => m === 'month' ? 'year' : 'month')} fontSize="xs">
                             {viewMode === 'month' ? 'Monthly' : 'Yearly'}
                         </Button>
                     </Tooltip>
                 </Flex>
+            </Flex>
+
+            {/* Legend - below selector, above calendar */}
+            <Flex justify="center" gap={4} mb={4} pt={0} flexWrap="wrap">
+                <HStack spacing={1}>
+                    <Box w={3} h={3} borderRadius="sm" bg={config.green} />
+                    <Text fontSize="xs" color="gray.500">On target</Text>
+                </HStack>
+                <HStack spacing={1}>
+                    <Box w={3} h={3} borderRadius="sm" bg={config.red} />
+                    <Text fontSize="xs" color="gray.500">Off target</Text>
+                </HStack>
+                <HStack spacing={1}>
+                    <Box w={3} h={3} borderRadius="sm" bg={config.orange} />
+                    <Text fontSize="xs" color="gray.500">Missing</Text>
+                </HStack>
+                <HStack spacing={1}>
+                    <Box w={3} h={3} borderRadius="sm" border="2px solid" borderColor={config.test5} bg="white" />
+                    <Text fontSize="xs" color="gray.500">Today</Text>
+                </HStack>
             </Flex>
 
             {viewMode === 'year' ? (
@@ -348,7 +402,13 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
                                                     onClick={() => handleCellClick(date, status.isInRange, isCurrentYear)}
                                                     _hover={(status.isInRange || extendable) && isCurrentYear ? { shadow: 'sm' } : {}}
                                                     opacity={isCurrentYear ? 1 : 0.5}
+                                                    position="relative"
                                                 >
+                                                    {status.hasComment && (
+                                                        <Box position="absolute" top={0.5} right={0.5}>
+                                                            <MessageSquareText size={10} color={config.test5} />
+                                                        </Box>
+                                                    )}
                                                     <Text fontSize="xs" fontWeight="medium" color={textColor}>
                                                         {format(date, 'MMM d')}
                                                     </Text>
@@ -367,53 +427,31 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
                 </>
             ) : (
                 <>
-            {/* Calendar header */}
-            <Grid templateColumns="repeat(7, 1fr)" gap={1} mb={1}>
+            {/* Monthly view: same structure as yearly but for one month, day number only in cells */}
+            <Grid templateColumns="repeat(7, 1fr)" gap={0.5} mb={1}>
                 {dayNames.map((day, i) => (
-                    <GridItem key={`header-${i}`}>
-                        <Text 
-                            fontSize="xs" 
-                            fontWeight="bold" 
-                            color="gray.500" 
-                            textAlign="center"
-                            textTransform="uppercase"
-                            py={2}
-                        >
+                    <GridItem key={`m-header-${i}`}>
+                        <Text fontSize="xs" fontWeight="bold" color="gray.500" textAlign="center" textTransform="uppercase" py={1}>
                             {day}
                         </Text>
                     </GridItem>
                 ))}
             </Grid>
-            
-            {/* Calendar weeks */}
-            <VStack spacing={1}>
+            <VStack spacing={0.5} align="stretch">
                 {calendarWeeks.map((week, weekIndex) => (
-                        <Box
-                            key={`week-${weekIndex}`}
-                            w="100%"
-                            transition="all 0.2s"
-                        >
-                            <Grid templateColumns="repeat(7, 1fr)" gap={1}>
+                    <Grid key={`m-week-${weekIndex}`} templateColumns="repeat(7, 1fr)" gap={0.5}>
                                 {week.map((date, dayIndex) => {
                                     const status = getDayStatus(date);
                                     const isCurrentMonth = isSameMonth(date, viewMonth);
-                                    
-                                    // Determine background color
                                     let bgColor = 'transparent';
                                     let borderColor = 'transparent';
                                     let textColor = isCurrentMonth ? config.black : 'gray.300';
                                     let cursor = 'default';
                                     const extendableMonth = canExtendTo(date);
-                                    
                                     if (status.isInRange && isCurrentMonth) {
                                         cursor = 'pointer';
-                                        
                                         if (status.hasKcal) {
-                                            if (status.hitTarget) {
-                                                bgColor = config.green;
-                                            } else {
-                                                bgColor = config.red;
-                                            }
+                                            bgColor = status.hitTarget ? config.green : config.red;
                                         } else if (status.isPast && !status.hasData) {
                                             bgColor = config.orange;
                                         } else if (status.isFuture) {
@@ -425,93 +463,53 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, onClose }) => {
                                     } else if (extendableMonth && isCurrentMonth) {
                                         cursor = 'pointer';
                                     }
-                                    
-                                    if (status.isToday) {
-                                        borderColor = config.test5;
-                                    }
-                                    
-                                    const tooltipKcal = status.dayInfo && status.dayInfo.data.kcal !== '' && status.dayInfo.data.kcal !== 0 ? String(status.dayInfo.data.kcal) : '—';
-                                    const tooltipKg = status.dayInfo && status.dayInfo.data.kg !== '' && status.dayInfo.data.kg !== 0 ? String(status.dayInfo.data.kg) : '—';
+                                    if (status.isToday) borderColor = config.test5;
                                     const tooltipLabel = status.isInRange
-                                        ? `${tooltipKcal} kcal • ${tooltipKg} ${weightUnit}${status.hasKcal ? (status.hitTarget ? ' ✓' : ' ✗') : ''}`
+                                        ? `${format(date, 'MMM d')}${status.dayInfo ? ` • ${status.dayInfo.data.kcal !== '' && status.dayInfo.data.kcal !== 0 ? status.dayInfo.data.kcal : '—'} kcal • ${status.dayInfo.data.kg !== '' && status.dayInfo.data.kg !== 0 ? status.dayInfo.data.kg : '—'} ${weightUnit}` : ''}`
                                         : '';
-                                    
                                     const kcalVal = status.dayInfo && status.dayInfo.data.kcal !== '' && status.dayInfo.data.kcal !== 0 ? String(status.dayInfo.data.kcal) : '—';
-                                    const weightValMobile = status.dayInfo && status.dayInfo.data.kg !== '' && status.dayInfo.data.kg !== 0 ? String(status.dayInfo.data.kg) : '—';
+                                    const kgVal = status.dayInfo && status.dayInfo.data.kg !== '' && status.dayInfo.data.kg !== 0 ? String(status.dayInfo.data.kg) : '—';
                                     return (
-                                        <GridItem key={`day-${weekIndex}-${dayIndex}`}>
-                                            <Tooltip 
-                                                label={tooltipLabel} 
-                                                fontSize="xs" 
-                                                isDisabled={!tooltipLabel}
-                                                placement="top"
-                                            >
+                                        <GridItem key={`m-${weekIndex}-${dayIndex}`}>
+                                            <Tooltip label={tooltipLabel} fontSize="xs" isDisabled={!tooltipLabel} placement="top">
                                                 <Box
                                                     bg={bgColor}
-                                                    border="2px solid"
+                                                    border="1px solid"
                                                     borderColor={borderColor}
-                                                    borderRadius="md"
+                                                    borderRadius="sm"
                                                     p={1}
                                                     textAlign="center"
-                                                    transition="all 0.2s"
                                                     cursor={cursor}
-                                                    minH={isMobile ? '52px' : '40px'}
-                                                    aspectRatio={isMobile ? '1' : undefined}
+                                                    minH="56px"
                                                     display="flex"
                                                     flexDirection="column"
-                                                    justifyContent="center"
                                                     alignItems="center"
+                                                    justifyContent="center"
                                                     onClick={() => handleCellClick(date, status.isInRange, isCurrentMonth)}
                                                     _hover={(status.isInRange || extendableMonth) && isCurrentMonth ? { shadow: 'sm' } : {}}
-                                                    opacity={isCurrentMonth ? 1 : 0.4}
+                                                    opacity={isCurrentMonth ? 1 : 0.5}
+                                                    position="relative"
                                                 >
-                                                    <Text fontSize={isMobile ? 'xs' : 'sm'} fontWeight={status.isToday ? 'bold' : 'medium'} color={textColor}>
+                                                    {status.hasComment && (
+                                                        <Box position="absolute" top={0.5} right={0.5}>
+                                                            <MessageSquareText size={10} color={config.test5} />
+                                                        </Box>
+                                                    )}
+                                                    <Text fontSize="xs" fontWeight="medium" color={textColor}>
                                                         {format(date, 'd')}
                                                     </Text>
-                                                    {status.isInRange && (
-                                                        isMobile ? (
-                                                            <VStack spacing={0} mt={0.5} lineHeight="1">
-                                                                <Text fontSize="9px" color="gray.600" opacity={kcalVal === '—' ? 0 : 1}>{kcalVal}</Text>
-                                                                <Text fontSize="9px" color="gray.600" opacity={weightValMobile === '—' ? 0 : 1}>{weightValMobile}</Text>
-                                                            </VStack>
-                                                        ) : (
-                                                            status.hasData && (
-                                                                <Flex fontSize="9px" color="gray.600" lineHeight="1" w="100%" justify="space-between" gap={2}>
-                                                                    <Text as="span" opacity={kcalVal === '—' ? 0 : 1}>{kcalVal}</Text>
-                                                                    <Text as="span" opacity={weightValMobile === '—' ? 0 : 1}>{weightValMobile}</Text>
-                                                                </Flex>
-                                                            )
-                                                        )
-                                                    )}
+                                                    <VStack spacing={0} mt={0.5} lineHeight="1.2">
+                                                        <Text fontSize="xs" color="gray.600" opacity={kcalVal === '—' ? 0 : 1}>{kcalVal}</Text>
+                                                        <Text fontSize="xs" color="gray.600" opacity={kgVal === '—' ? 0 : 1}>{kgVal}</Text>
+                                                    </VStack>
                                                 </Box>
                                             </Tooltip>
                                         </GridItem>
                                     );
                                 })}
-                            </Grid>
-                        </Box>
+                    </Grid>
                 ))}
             </VStack>
-            
-            {/* Legend */}
-            <Flex justify="center" gap={4} mt={4} pt={3} borderTop="1px solid" borderColor="gray.100" flexWrap="wrap">
-                <HStack spacing={1}>
-                    <Box w={3} h={3} borderRadius="sm" bg={config.green} />
-                    <Text fontSize="xs" color="gray.500">On target</Text>
-                </HStack>
-                <HStack spacing={1}>
-                    <Box w={3} h={3} borderRadius="sm" bg={config.red} />
-                    <Text fontSize="xs" color="gray.500">Off target</Text>
-                </HStack>
-                <HStack spacing={1}>
-                    <Box w={3} h={3} borderRadius="sm" bg={config.orange} />
-                    <Text fontSize="xs" color="gray.500">Missing</Text>
-                </HStack>
-                <HStack spacing={1}>
-                    <Box w={3} h={3} borderRadius="sm" border="2px solid" borderColor={config.test5} bg="white" />
-                    <Text fontSize="xs" color="gray.500">Today</Text>
-                </HStack>
-            </Flex>
                 </>
             )}
 

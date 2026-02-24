@@ -121,6 +121,7 @@ interface WeekData {
     days: {
         kg: number | '';
         kcal: number | '';
+        comment?: string;
     }[];
     avgKcal: number;
     avgWeight: number;
@@ -155,11 +156,12 @@ interface CalcState extends CalcPayload {
     // Data operations
     fetchData: (uid: string) => Promise<void>;
     loadFromStorage: () => void;
+    syncToCloud: () => void;
     
     // Week operations
     addNewWeek: () => void;
     addWeeksUntil: (targetDateIso: string) => void;
-    updateDay: (payload: { dayIndex: number; weekNumber: number; type: 'kg' | 'kcal'; value: number | '' }) => void;
+    updateDay: (payload: { dayIndex: number; weekNumber: number; type: 'kg' | 'kcal' | 'comment'; value: number | '' | string }) => void;
     selectWeek: (weekNumber: number) => void;
     toggleWeekLock: (weekNumber: number) => void;
     
@@ -247,10 +249,17 @@ export const useCalcStore = create<CalcState>((set) => ({
                 stored = localStorage.getItem(FALLBACK_STORAGE_KEY);
                 if (stored) {
                     console.log('Migrating data from fallback storage key to user-specific key');
-                    // Save to user-specific key
                     localStorage.setItem(storageKey, stored);
-                    // Optionally remove old data
                     localStorage.removeItem(FALLBACK_STORAGE_KEY);
+                }
+            }
+
+            // If still no data, check the legacy "localState" key from old production
+            if (!stored) {
+                stored = localStorage.getItem('localState');
+                if (stored) {
+                    console.log('Migrating data from legacy "localState" key to new format');
+                    localStorage.setItem(storageKey, stored);
                 }
             }
 
@@ -264,6 +273,11 @@ export const useCalcStore = create<CalcState>((set) => ({
         } catch (error) {
             console.error('Failed to load from localStorage:', error);
         }
+    },
+
+    syncToCloud: () => {
+        const state = useCalcStore.getState();
+        syncToFirebase(state);
     },
 
     addNewWeek: () => set((state) => {
@@ -495,6 +509,7 @@ export const useCalc = () => ({
     // Data operations
     fetchData: useCalcStore(state => state.fetchData),
     loadFromStorage: useCalcStore(state => state.loadFromStorage),
+    syncToCloud: useCalcStore(state => state.syncToCloud),
     
     // Week operations
     addNewWeek: useCalcStore(state => state.addNewWeek),
